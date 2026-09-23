@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8081/admin",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "La Quinta Pata — Gastrobar en San Francisco, Panamá",
+      "hasCanvas": false,
+      "bodyTextLen": 189,
+      "bodyTextHash": "a601b1a2c34f773e29b704f69f016921b9e375e315a3093a2bf35aaecd062bc3",
+      "bodyTextPrefix": "CASA Reservas Solicitudes dejadas en este navegador. No es la ba",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/admin-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "La Quinta Pata — Gastrobar en San Francisco, Panamá",
+      "hasCanvas": false,
+      "bodyTextLen": 189,
+      "bodyTextHash": "a601b1a2c34f773e29b704f69f016921b9e375e315a3093a2bf35aaecd062bc3",
+      "bodyTextPrefix": "CASA Reservas Solicitudes dejadas en este navegador. No es la ba",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/admin-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/admin-built.json"
+}

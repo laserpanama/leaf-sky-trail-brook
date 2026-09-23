@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "La Quinta Pata — Gastrobar en San Francisco, Panamá",
+      "hasCanvas": false,
+      "bodyTextLen": 2294,
+      "bodyTextHash": "cbf9e7992c7d8af8427977f04a8439e35646fb8af88727f97c03bcaeef894533",
+      "bodyTextPrefix": "La Quinta Pata Carta Barra Noches Nosotros Visítanos ES EN Reser",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/cine-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "La Quinta Pata — Gastrobar en San Francisco, Panamá",
+      "hasCanvas": false,
+      "bodyTextLen": 2265,
+      "bodyTextHash": "fe8e0fdb5f8c91bc2c4b26b8d112d667de04f36e95c1c13f5a0d82272614646d",
+      "bodyTextPrefix": "La Quinta Pata ES EN GASTROBAR · SAN FRANCISCO, PANAMÁ El quinto",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/cine-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/cine-built.json"
+}

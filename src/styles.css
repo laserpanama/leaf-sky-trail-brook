@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #110f0d;
+  --color-surface: #1a1714;
+  --color-fg: #f3eadc;
+  --color-muted: #a39688;
+  --color-brass: #c4a574;
+  --color-ink: #1a120c;
+  --color-line: #2c2621;
+  --font-display: "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --radius: 0.25rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--color-brass);
+    color: var(--color-ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .hero-still,
+  .frame img {
+    animation: none;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.12) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+.hero-still {
+  animation: drift 32s ease-in-out infinite alternate;
+  transform-origin: 62% 42%;
+}
+
+.vignette {
+  background:
+    linear-gradient(to top, var(--color-bg) 0%, transparent 38%),
+    radial-gradient(
+      ellipse at center,
+      transparent 30%,
+      color-mix(in srgb, var(--color-bg) 72%, transparent) 100%
+    );
+}
+
+.grain {
+  pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-fg) 18%, transparent) 0.6px, transparent 0.6px);
+  background-size: 3px 3px;
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+}
+
+.frame {
+  overflow: hidden;
+}
+
+.frame img {
+  transition: transform 700ms ease;
+}
+
+.frame:hover img {
+  transform: scale(1.04);
+}
+
+.still-fade {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-bg) 88%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg) 28%, transparent) 46%,
+    transparent 72%
+  );
+}
+
+.leader {
+  border-bottom: 1px dotted color-mix(in srgb, var(--color-brass) 40%, transparent);
+}
+
+.lqp-cal .rdp-root {
+  --rdp-accent-color: var(--color-brass);
+  --rdp-accent-background-color: var(--color-brass);
+  --rdp-day-height: 2.75rem;
+  --rdp-day-width: 2.75rem;
+  --rdp-day_button-height: 2.5rem;
+  --rdp-day_button-width: 2.5rem;
+  --rdp-nav-height: 2.75rem;
+  --rdp-weekday-opacity: 1;
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+.lqp-cal .rdp-weekday {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lqp-cal .rdp-day_button {
+  color: var(--color-fg);
+}
+.lqp-cal .rdp-selected .rdp-day_button {
+  background: var(--color-brass);
+  color: var(--color-ink);
+  border: none;
+}
+.lqp-cal .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: var(--color-brass);
+}
+.lqp-cal .rdp-disabled .rdp-day_button {
+  color: var(--color-line);
+}
+.lqp-cal .rdp-chevron {
+  fill: var(--color-brass);
+}

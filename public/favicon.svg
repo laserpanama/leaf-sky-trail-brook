@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="La Quinta Pata">
+  <rect width="32" height="32" rx="6" fill="#110F0D"/>
+  <path fill="#F3EADC" d="M9 7h14.2v3.2H12.6v3.3h6.2c3.5 0 5.7 2 5.7 5 0 3.4-2.8 5.9-6.8 5.9-3.3 0-5.7-1.6-6.6-4.3l2.9-1.1c.5 1.5 1.8 2.4 3.6 2.4 2.2 0 3.6-1.3 3.6-3 0-1.7-1.3-2.8-3.6-2.8H9V7z"/>
+  <rect x="9" y="25.2" width="7.2" height="2" fill="#C4A574"/>
+</svg>
