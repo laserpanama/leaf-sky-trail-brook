@@ -1,14 +1,35 @@
-import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
-import { getCookie, setCookie } from "@tanstack/react-start/server";
+import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { deleteCookie, getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
+import { env } from "@/lib/env.server";
 import { SLOT_TIMES } from "@/lib/slots";
 import type { Store } from "@/lib/books/engine";
 
-const COOKIE = "lqp_casa";
-const PASS = "brasas5768";
+/**
+ * House (admin) access.
+ * - CASA_PASSWORD: the key staff type in /admin. Never commit it.
+ * - CASA_SECRET:   32+ random chars used to sign sessions. Rotate it to log everyone out.
+ * Missing or weak config => the house stays closed (fail closed).
+ */
+export const COOKIE = "lqp_casa";
+const SESSION_SECONDS = 60 * 60 * 24 * 14;
+const LOGIN_WINDOW_MIN = 15;
+const LOGIN_MAX_PER_IP = 5;
+const LOGIN_MAX_GLOBAL = 40;
 
-function seal(value: string) {
-  return createHash("sha256").update(`lqp-casa:${value}`).digest("hex");
+function houseConfig() {
+  const pass = env("CASA_PASSWORD");
+  const secret = env("CASA_SECRET");
+  if (!pass || pass.length < 10 || !secret || secret.length < 32) return null;
+  return { pass, secret };
+}
+
+export function houseConfigured() {
+  return houseConfig() !== null;
+}
+
+function hmac(secret: string, value: string) {
+  return createHmac("sha256", secret).update(value).digest("hex");
 }
 
 function safeEqual(a: string, b: string) {
@@ -18,20 +39,88 @@ function safeEqual(a: string, b: string) {
   return timingSafeEqual(left, right);
 }
 
-export function houseOpen() {
-  const cookie = getCookie(COOKIE);
-  return Boolean(cookie && safeEqual(cookie, seal(PASS)));
+/** Session = "<expiresAt>.<hmac(expiresAt|passwordFingerprint)>". Changing the password or the secret revokes all sessions. */
+function signSession(expires: number) {
+  const cfg = houseConfig();
+  if (!cfg) return null;
+  const fingerprint = createHash("sha256").update(cfg.pass).digest("hex");
+  return `${expires}.${hmac(cfg.secret, `${expires}|${fingerprint}`)}`;
 }
 
-export function enterHouse(password: string) {
-  if (!safeEqual(seal(password), seal(PASS))) return false;
-  setCookie(COOKIE, seal(PASS), {
+export function verifySession(token: string | undefined | null) {
+  if (!token) return false;
+  const [raw, mac] = token.split(".");
+  const expires = Number(raw);
+  if (!mac || !Number.isFinite(expires) || expires * 1000 < Date.now()) return false;
+  const expected = signSession(expires);
+  return Boolean(expected && safeEqual(token, expected));
+}
+
+export function readCookieHeader(header: string | null, name: string) {
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const [k, ...v] = part.trim().split("=");
+    if (k === name) return decodeURIComponent(v.join("="));
+  }
+  return undefined;
+}
+
+export function houseOpen() {
+  return verifySession(getCookie(COOKIE));
+}
+
+export function ipKey() {
+  let ip = "unknown";
+  try {
+    ip = getRequestIP({ xForwardedFor: true }) ?? "unknown";
+  } catch {
+    /* no request context */
+  }
+  const salt = env("CASA_SECRET") ?? "lqp";
+  // Use the LAST X-Forwarded-For hop: it is the one added by our own proxy (Vercel / Nginx).
+  // The first hop is client-controlled and would let a bot rotate "IPs" to dodge limits.
+  const hop = ip.split(",").map((part) => part.trim()).filter(Boolean).pop() ?? "unknown";
+  return createHash("sha256").update(`${salt}|${hop}`).digest("hex").slice(0, 32);
+}
+
+export type EnterResult = { open: boolean; reason?: "config" | "wait" | "key" };
+
+export async function enterHouse(password: string): Promise<EnterResult> {
+  const cfg = houseConfig();
+  if (!cfg) return { open: false, reason: "config" };
+  const sql = await getSql();
+  const ip = ipKey();
+  const [mine] = await sql<{ n: number }>`
+    select count(*)::int as n from casa_attempts
+    where ip_hash = ${ip} and at > now() - make_interval(mins => ${LOGIN_WINDOW_MIN})
+  `;
+  const [all] = await sql<{ n: number }>`
+    select count(*)::int as n from casa_attempts
+    where at > now() - make_interval(mins => ${LOGIN_WINDOW_MIN})
+  `;
+  if (Number(mine?.n) >= LOGIN_MAX_PER_IP || Number(all?.n) >= LOGIN_MAX_GLOBAL) {
+    return { open: false, reason: "wait" };
+  }
+  // Compare fixed-length MACs so length never leaks.
+  if (!safeEqual(hmac(cfg.secret, password), hmac(cfg.secret, cfg.pass))) {
+    await sql`insert into casa_attempts (ip_hash) values (${ip})`;
+    await sql`delete from casa_attempts where at < now() - interval '1 day'`;
+    return { open: false, reason: "key" };
+  }
+  await sql`delete from casa_attempts where ip_hash = ${ip}`;
+  const expires = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
+  setCookie(COOKIE, signSession(expires)!, {
     httpOnly: true,
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_SECONDS,
   });
-  return true;
+  return { open: true };
+}
+
+export function leaveHouse() {
+  deleteCookie(COOKIE, { path: "/" });
 }
 
 function assertHouse() {
@@ -78,16 +167,76 @@ export async function writeMenu(kind: "plate" | "drink", id: string, price: numb
   `;
 }
 
-export async function placeHold(input: { date: string; time: string; party: number }) {
+export type HoldInput = {
+  date: string;
+  time: string;
+  party: number;
+  name: string;
+  phone: string;
+  notes?: string;
+  website?: string;
+};
+
+const HOLDS_PER_IP_10MIN = 3;
+const HOLDS_PER_IP_DAY = 8;
+const HOLDS_GLOBAL_DAY = 200;
+const BOOK_AHEAD_DAYS = 90;
+
+function panamaToday() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Panama" }).format(new Date());
+}
+
+function addDaysIso(iso: string, days: number) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+export function cleanHold(input: HoldInput) {
   if (!SLOT_TIMES.includes(input.time as (typeof SLOT_TIMES)[number])) throw new Error("hora");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new Error("fecha");
-  const party = Math.round(input.party);
-  if (party < 1 || party > 20) throw new Error("personas");
-  const id = randomUUID();
+  const today = panamaToday();
+  if (input.date < today || input.date > addDaysIso(today, BOOK_AHEAD_DAYS)) throw new Error("fecha");
+  const party = Math.round(Number(input.party));
+  if (!Number.isFinite(party) || party < 1 || party > 20) throw new Error("personas");
+  const name = String(input.name ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (name.length < 2) throw new Error("nombre");
+  const digits = String(input.phone ?? "").replace(/[^\d+]/g, "");
+  const phone = digits.startsWith("+") ? `+${digits.slice(1).replace(/\+/g, "")}` : digits.replace(/\+/g, "");
+  const bare = phone.replace("+", "");
+  if (bare.length < 7 || bare.length > 15) throw new Error("telefono");
+  const notes = String(input.notes ?? "").trim().slice(0, 300);
+  return { date: input.date, time: input.time, party, name, phone, notes };
+}
+
+export async function placeHold(input: HoldInput) {
+  // Honeypot: real people never fill the hidden "website" field. Pretend success, store nothing.
+  if (input.website && input.website.trim()) return { id: randomUUID() };
+  const hold = cleanHold(input);
   const sql = await getSql();
+  const ip = ipKey();
+  const [recent] = await sql<{ short: number; day: number; global: number }>`
+    select
+      count(*) filter (where ip_hash = ${ip} and created_at > now() - interval '10 minutes')::int as short,
+      count(*) filter (where ip_hash = ${ip} and created_at > now() - interval '1 day')::int as day,
+      count(*) filter (where created_at > now() - interval '1 day')::int as global
+    from holds
+  `;
+  if (
+    Number(recent?.short) >= HOLDS_PER_IP_10MIN ||
+    Number(recent?.day) >= HOLDS_PER_IP_DAY ||
+    Number(recent?.global) >= HOLDS_GLOBAL_DAY
+  ) {
+    throw new Error("espera");
+  }
+  const [dupe] = await sql<{ id: string }>`
+    select id from holds where day = ${hold.date} and slot = ${hold.time} and phone = ${hold.phone} limit 1
+  `;
+  if (dupe) return { id: dupe.id };
+  const id = randomUUID();
   await sql`
-    insert into holds (id, day, slot, party, status)
-    values (${id}, ${input.date}, ${input.time}, ${party}, 'pendiente')
+    insert into holds (id, day, slot, party, status, name, phone, notes, ip_hash)
+    values (${id}, ${hold.date}, ${hold.time}, ${hold.party}, 'pendiente', ${hold.name}, ${hold.phone}, ${hold.notes}, ${ip})
   `;
   return { id };
 }
@@ -95,8 +244,20 @@ export async function placeHold(input: { date: string; time: string; party: numb
 export async function listHolds() {
   assertHouse();
   const sql = await getSql();
-  const rows = await sql<{ id: string; day: string; slot: string; party: number; status: string }>`
-    select id, day, slot, party, status from holds order by day, slot, created_at
+  const rows = await sql<{
+    id: string;
+    day: string;
+    slot: string;
+    party: number;
+    status: string;
+    name: string | null;
+    phone: string | null;
+    notes: string | null;
+  }>`
+    select id, day, slot, party, status, name, phone, notes from holds
+    where day >= to_char(now() - interval '7 days', 'YYYY-MM-DD')
+    order by day, slot, created_at
+    limit 500
   `;
   return rows.map((row) => ({
     id: row.id,
@@ -107,7 +268,9 @@ export async function listHolds() {
       | "pendiente"
       | "confirmada"
       | "no",
-    notes: "",
+    name: row.name ?? "",
+    phone: row.phone ?? "",
+    notes: row.notes ?? "",
   }));
 }
 

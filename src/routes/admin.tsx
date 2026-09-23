@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { houseEnter, houseOps, houseStatus, listRequests, markRequest, menuCosts, publicMenu } from "@/lib/casa";
+import { houseEnter, houseLeave, houseOps, houseStatus, listRequests, markRequest, menuCosts, publicMenu } from "@/lib/casa";
 import {
   DRINK_SECTIONS,
   drinkStatus,
@@ -38,8 +38,11 @@ function Admin() {
   const [tab, setTab] = useState<"reservas" | "barra" | "cocina" | "insumos" | "costo">("reservas");
   const [open, setOpen] = useState<boolean | null>(null);
   const [key, setKey] = useState("");
-  const [denied, setDenied] = useState(false);
-  const [holds, setHolds] = useState<Array<{ id: string; date: string; time: string; party: number; status: HoldStatus; notes: string }>>([]);
+  const [denied, setDenied] = useState<"" | "key" | "wait" | "config">("");
+  const [configured, setConfigured] = useState(true);
+  const [holds, setHolds] = useState<
+    Array<{ id: string; date: string; time: string; party: number; status: HoldStatus; name: string; phone: string; notes: string }>
+  >([]);
   const [filter, setFilter] = useState<HoldStatus | "todas">("pendiente");
   const [drinks, setDrinksState] = useState<Drink[]>([]);
   const [plates, setPlates] = useState<Plate[]>([]);
@@ -86,6 +89,7 @@ function Admin() {
     void houseStatus()
       .then((status) => {
         setOpen(status.open);
+        setConfigured(status.configured);
         if (status.open) return loadCasa();
       })
       .catch(() => setOpen(false));
@@ -141,11 +145,14 @@ function Admin() {
             className="mt-10 grid max-w-sm gap-4"
             onSubmit={(e) => {
               e.preventDefault();
-              void houseEnter({ data: { password: key } }).then((result) => {
-                setDenied(!result.open);
-                setOpen(result.open);
-                if (result.open) void loadCasa();
-              });
+              void houseEnter({ data: { password: key } })
+                .then((result) => {
+                  setDenied(result.open ? "" : (result.reason ?? "key"));
+                  setOpen(result.open);
+                  setKey("");
+                  if (result.open) void loadCasa();
+                })
+                .catch(() => setDenied("key"));
             }}
           >
             <h1 className="font-display text-5xl">Casa</h1>
@@ -159,7 +166,15 @@ function Admin() {
                 className="min-h-11 border border-line bg-bg px-3 text-fg"
               />
             </label>
-            {denied ? <p className="text-sm text-brass">Esa llave no abre.</p> : null}
+            {!configured || denied === "config" ? (
+              <p className="text-sm text-brass">
+                La casa no está configurada: faltan CASA_PASSWORD (10+ caracteres) y CASA_SECRET (32+) en el servidor.
+              </p>
+            ) : null}
+            {denied === "key" ? <p className="text-sm text-brass">Esa llave no abre.</p> : null}
+            {denied === "wait" ? (
+              <p className="text-sm text-brass">Demasiados intentos. Espera 15 minutos.</p>
+            ) : null}
             <button type="submit" className="min-h-11 bg-brass text-ink">
               Entrar
             </button>
@@ -170,8 +185,15 @@ function Admin() {
           <>
             <h1 className="mt-8 font-display text-5xl">Reservas</h1>
             <p className="mt-4 max-w-lg text-sm text-muted">
-              Solicitudes de fecha, hora y personas. El nombre y la nota van solo por WhatsApp.
+              Solicitudes del sitio. WhatsApp sigue siendo la confirmación: toca el teléfono para escribirle.
             </p>
+            <button
+              type="button"
+              onClick={() => void houseLeave().then(() => setOpen(false))}
+              className="mt-4 min-h-11 border border-line px-4 text-sm text-muted"
+            >
+              Cerrar sesión
+            </button>
             <div className="mt-8 flex flex-wrap gap-2">
               {(["pendiente", "confirmada", "no", "todas"] as const).map((key) => (
                 <button
@@ -201,6 +223,17 @@ function Admin() {
                       <p className="mt-1 text-sm text-muted">
                         {hold.party} {Number(hold.party) === 1 ? "persona" : "personas"} · {labels[hold.status]}
                       </p>
+                      {hold.name ? <p className="mt-2 text-fg">{hold.name}</p> : null}
+                      {hold.phone ? (
+                        <a
+                          className="mt-1 inline-flex min-h-11 items-center text-brass underline"
+                          target="_blank"
+                          rel="noreferrer"
+                          href={`https://wa.me/${hold.phone.replace(/\D/g, "").replace(/^(?=[6-9]\d{7}$)/, "507")}`}
+                        >
+                          {hold.phone}
+                        </a>
+                      ) : null}
                       {hold.notes ? <p className="mt-3 max-w-md text-fg">{hold.notes}</p> : null}
                     </div>
                     <div className="flex flex-wrap gap-2">

@@ -16,10 +16,29 @@ export const saveMenu = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export type HoldRequest = {
+  date: string;
+  time: string;
+  party: number;
+  name: string;
+  phone: string;
+  notes?: string;
+  website?: string;
+};
+
 export const placeHold = createServerFn({ method: "POST" })
-  .validator((input: { date: string; time: string; party: number }) => {
-    if (!input || typeof input.party !== "number") throw new Error("mesa");
-    return input;
+  .validator((input: HoldRequest) => {
+    if (!input || typeof input !== "object" || typeof input.party !== "number") throw new Error("mesa");
+    const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+    return {
+      date: str(input.date, 10),
+      time: str(input.time, 5),
+      party: input.party,
+      name: str(input.name, 120),
+      phone: str(input.phone, 40),
+      notes: str(input.notes, 600),
+      website: str(input.website, 200),
+    };
   })
   .handler(async ({ data }) => {
     const { placeHold: save } = await import("@/lib/casa-ops.server");
@@ -33,7 +52,8 @@ export const listRequests = createServerFn({ method: "GET" }).handler(async () =
 
 export const markRequest = createServerFn({ method: "POST" })
   .validator((input: { id: string; status: "pendiente" | "confirmada" | "no" }) => {
-    if (!input?.id || !["pendiente", "confirmada", "no"].includes(input.status)) throw new Error("estado");
+    if (typeof input?.id !== "string" || !/^[0-9a-f-]{36}$/.test(input.id)) throw new Error("estado");
+    if (!["pendiente", "confirmada", "no"].includes(input.status)) throw new Error("estado");
     return input;
   })
   .handler(async ({ data }) => {
@@ -43,18 +63,24 @@ export const markRequest = createServerFn({ method: "POST" })
   });
 
 export const houseStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { houseOpen } = await import("@/lib/casa-ops.server");
-  return { open: houseOpen() };
+  const { houseOpen, houseConfigured } = await import("@/lib/casa-ops.server");
+  return { open: houseOpen(), configured: houseConfigured() };
+});
+
+export const houseLeave = createServerFn({ method: "POST" }).handler(async () => {
+  const { leaveHouse } = await import("@/lib/casa-ops.server");
+  leaveHouse();
+  return { open: false };
 });
 
 export const houseEnter = createServerFn({ method: "POST" })
   .validator((input: { password: string }) => {
     if (!input || typeof input.password !== "string") throw new Error("llave");
-    return { password: input.password };
+    return { password: input.password.slice(0, 200) };
   })
   .handler(async ({ data }) => {
     const { enterHouse } = await import("@/lib/casa-ops.server");
-    return { open: enterHouse(data.password) };
+    return enterHouse(data.password);
   });
 
 export const supplyDesk = createServerFn({ method: "POST" })

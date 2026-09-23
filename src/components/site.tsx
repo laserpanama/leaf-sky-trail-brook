@@ -22,7 +22,8 @@ export function Site() {
   const [lang, setLang] = useState<Lang>("es");
   const t = copy[lang];
   const [held, setHeld] = useState(false);
-  const [form, setForm] = useState({ date: "", time: "", party: "2", notes: "" });
+  const [saveState, setSaveState] = useState<"idle" | "sending" | "saved" | "error" | "wait" | "bad">("idle");
+  const [form, setForm] = useState({ date: "", time: "", party: "2", name: "", phone: "", notes: "", website: "" });
 
   useEffect(() => {
     const saved = window.localStorage.getItem("lqp-lang");
@@ -56,6 +57,7 @@ export function Site() {
 
   const message = useMemo(() => {
     const bits = [
+      form.name.trim() && `${lang === "es" ? "Nombre" : "Name"}: ${form.name.trim()}`,
       form.date && `${lang === "es" ? "Fecha" : "Date"}: ${form.date}`,
       form.time && `${lang === "es" ? "Hora" : "Time"}: ${form.time}`,
       form.party && `${lang === "es" ? "Personas" : "Party"}: ${form.party}`,
@@ -261,6 +263,24 @@ export function Site() {
               <div className="border border-line bg-bg p-8">
                 <p className="font-display text-4xl leading-tight">{t.holdTitle}</p>
                 <p className="mt-4 text-muted">{t.holdBody}</p>
+                {saveState === "sending" ? <p className="mt-4 text-sm text-muted">{t.sending}</p> : null}
+                {saveState === "error" || saveState === "wait" || saveState === "bad" ? (
+                  <p role="alert" className="mt-4 text-sm text-brass">
+                    {saveState === "wait" ? t.saveWait : saveState === "bad" ? t.saveBad : t.saveError}
+                  </p>
+                ) : null}
+                {saveState === "bad" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHeld(false);
+                      setSaveState("idle");
+                    }}
+                    className="mt-4 block text-sm text-brass underline"
+                  >
+                    {lang === "es" ? "Corregir datos" : "Fix details"}
+                  </button>
+                ) : null}
                 <a
                   href={waLink(message)}
                   target="_blank"
@@ -275,11 +295,33 @@ export function Site() {
                 className="grid gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!form.date || !form.time) return;
-                  const party = Number(form.party);
-                  void placeHold({ data: { date: form.date, time: form.time, party } }).catch(() => undefined);
+                  if (!form.date || !form.time || saveState === "sending") return;
+                  // Open WhatsApp synchronously (inside the click) so mobile browsers don't block it.
                   window.open(waLink(message), "_blank", "noopener,noreferrer");
                   setHeld(true);
+                  setSaveState("sending");
+                  placeHold({
+                    data: {
+                      date: form.date,
+                      time: form.time,
+                      party: Number(form.party),
+                      name: form.name,
+                      phone: form.phone,
+                      notes: form.notes,
+                      website: form.website,
+                    },
+                  })
+                    .then(() => setSaveState("saved"))
+                    .catch((err: unknown) => {
+                      const msg = err instanceof Error ? err.message : "";
+                      setSaveState(
+                        msg.includes("espera")
+                          ? "wait"
+                          : /nombre|telefono|fecha|hora|personas/.test(msg)
+                            ? "bad"
+                            : "error",
+                      );
+                    });
                 }}
               >
                 <label className="grid gap-2 text-sm text-muted">
@@ -311,10 +353,51 @@ export function Site() {
                     />
                   </label>
                 </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="grid gap-2 text-sm text-muted">
+                    {t.guestName}
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={60}
+                      autoComplete="name"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm text-muted">
+                    {t.guestPhone}
+                    <input
+                      required
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      pattern="[+0-9 ()-]{7,20}"
+                      placeholder={t.phonePh}
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                    />
+                  </label>
+                </div>
+                {/* Honeypot: hidden from people and screen readers; bots fill it. */}
+                <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                  <label>
+                    Website
+                    <input
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={form.website}
+                      onChange={(e) => setForm({ ...form, website: e.target.value })}
+                    />
+                  </label>
+                </div>
                 <label className="grid gap-2 text-sm text-muted">
                   {t.notes}
                   <textarea
                     rows={3}
+                    maxLength={300}
                     value={form.notes}
                     placeholder={t.notesPh}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
