@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { houseEnter, houseLeave, houseOps, houseStatus, listRequests, markRequest, menuCosts, publicMenu } from "@/lib/casa";
+import { houseEnter, houseLeave, houseOps, houseStatus, listOrders, listRequests, markOrder, markPay, markRequest, menuCosts, publicMenu } from "@/lib/casa";
 import {
   DRINK_SECTIONS,
   drinkStatus,
@@ -35,7 +35,7 @@ const labels: Record<HoldStatus, string> = {
 };
 
 function Admin() {
-  const [tab, setTab] = useState<"reservas" | "barra" | "cocina" | "insumos" | "costo">("reservas");
+  const [tab, setTab] = useState<"reservas" | "pedidos" | "barra" | "cocina" | "insumos" | "costo">("reservas");
   const [open, setOpen] = useState<boolean | null>(null);
   const [key, setKey] = useState("");
   const [denied, setDenied] = useState<"" | "key" | "wait" | "config">("");
@@ -43,7 +43,20 @@ function Admin() {
   const [holds, setHolds] = useState<
     Array<{ id: string; date: string; time: string; party: number; status: HoldStatus; name: string; phone: string; notes: string }>
   >([]);
+  const [orders, setOrders] = useState<
+    Array<{
+      id: string;
+      service: "mesa" | "llevar";
+      pay: "yappy" | "tarjeta" | "efectivo";
+      payStatus: "pendiente" | "cobrado";
+      status: "pendiente" | "listo" | "no";
+      total: number;
+      createdAt: string;
+      lines: Array<{ kind: "plate" | "drink"; id: string; name: string; qty: number; price: number }>;
+    }>
+  >([]);
   const [filter, setFilter] = useState<HoldStatus | "todas">("pendiente");
+  const [orderFilter, setOrderFilter] = useState<"pendiente" | "listo" | "no" | "todas">("pendiente");
   const [drinks, setDrinksState] = useState<Drink[]>([]);
   const [plates, setPlates] = useState<Plate[]>([]);
   const [section, setSection] = useState<DrinkSection | "todas">("casa");
@@ -83,6 +96,11 @@ function Admin() {
     } catch {
       setHolds([]);
     }
+    try {
+      setOrders(await listOrders());
+    } catch {
+      setOrders([]);
+    }
   }
 
   useEffect(() => {
@@ -96,10 +114,19 @@ function Admin() {
   }, []);
 
   const shown = holds.filter((hold) => filter === "todas" || hold.status === filter);
+  const shownOrders = orders.filter((order) => orderFilter === "todas" || order.status === orderFilter);
   const shownDrinks = drinks.filter((drink) => section === "todas" || drink.section === section);
 
   function mark(id: string, status: HoldStatus) {
     void markRequest({ data: { id, status } }).then(() => loadCasa());
+  }
+
+  function markTicket(id: string, status: "pendiente" | "listo" | "no") {
+    void markOrder({ data: { id, status } }).then(() => loadCasa());
+  }
+
+  function markMoney(id: string, payStatus: "pendiente" | "cobrado") {
+    void markPay({ data: { id, payStatus } }).then(() => loadCasa());
   }
 
   function refreshDrinks() {
@@ -118,12 +145,13 @@ function Admin() {
       <div className="mx-auto max-w-5xl">
         <p className="text-xs tracking-[0.28em] text-brass uppercase">Casa</p>
         <p className="mt-3 max-w-xl text-sm text-muted">
-          Reservas, precios y costos de la casa. La carta pública no muestra lo que cuesta.
+          Reservas, pedidos, precios y costos de la casa. La carta pública no muestra lo que cuesta.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           {(
             [
               ["reservas", "Reservas"],
+              ["pedidos", "Pedidos"],
               ["cocina", "Platos"],
               ["barra", "Tragos"],
               ["insumos", "Insumos"],
@@ -251,6 +279,98 @@ function Admin() {
                           {labels[status]}
                         </button>
                       ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : tab === "pedidos" ? (
+          <>
+            <h1 className="mt-8 font-display text-5xl">Pedidos</h1>
+            <p className="mt-4 max-w-lg text-sm text-muted">
+              Lo que se pidió desde la carta. La nota y el nombre van solo por WhatsApp. Se paga en el local.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {(["pendiente", "listo", "no", "todas"] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOrderFilter(status)}
+                  className={
+                    orderFilter === status
+                      ? "min-h-11 bg-brass px-4 text-ink"
+                      : "min-h-11 border border-line px-4 text-muted"
+                  }
+                >
+                  {status === "todas" ? "Todas" : status === "listo" ? "Listo" : status === "no" ? "No" : "Pendiente"}
+                </button>
+              ))}
+            </div>
+            {shownOrders.length === 0 ? (
+              <p className="mt-12 font-display text-3xl text-muted">Nada en esta lista.</p>
+            ) : (
+              <ul className="mt-8 divide-y divide-line border-y border-line">
+                {shownOrders.map((order) => (
+                  <li key={order.id} className="grid gap-4 py-6 sm:grid-cols-[1fr_auto] sm:items-start">
+                    <div>
+                      <p className="font-display text-3xl">
+                        {new Intl.DateTimeFormat("es-PA", {
+                          timeZone: "America/Panama",
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }).format(new Date(order.createdAt))}
+                        {" · "}
+                        {order.service === "llevar" ? "Para llevar" : "En el local"}
+                        {" · "}
+                        {order.pay === "yappy" ? "Yappy" : order.pay === "tarjeta" ? "Tarjeta" : "Efectivo"}
+                        {" · "}
+                        {order.payStatus === "cobrado" ? "Cobrado" : "Por cobrar"}
+                      </p>
+                      <ul className="mt-3 grid gap-1 text-sm">
+                        {order.lines.map((line) => (
+                          <li key={`${line.kind}:${line.id}`}>
+                            {line.qty} × {line.name} · {money(line.price)}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-sm text-brass">{money(order.total)}</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {(["pendiente", "listo", "no"] as const).map((status) => (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() => markTicket(order.id, status)}
+                            className={
+                              order.status === status
+                                ? "min-h-11 bg-brass px-3 text-sm text-ink"
+                                : "min-h-11 border border-line px-3 text-sm text-muted"
+                            }
+                          >
+                            {status === "listo" ? "Listo" : status === "no" ? "No" : "Pendiente"}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {(["pendiente", "cobrado"] as const).map((payStatus) => (
+                          <button
+                            key={payStatus}
+                            type="button"
+                            onClick={() => markMoney(order.id, payStatus)}
+                            className={
+                              order.payStatus === payStatus
+                                ? "min-h-11 bg-brass px-3 text-sm text-ink"
+                                : "min-h-11 border border-line px-3 text-sm text-muted"
+                            }
+                          >
+                            {payStatus === "cobrado" ? "Cobrado" : "Por cobrar"}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </li>
                 ))}

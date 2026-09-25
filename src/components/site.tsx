@@ -6,6 +6,8 @@ import { format, parseISO, startOfToday } from "date-fns";
 import "react-day-picker/style.css";
 import { WA_BASE, WA_NUMBER, copy, type Lang } from "@/lib/copy";
 import { placeHold, publicMenu } from "@/lib/casa";
+import { addToCart, cartLines, hydrateCart, type CartLine } from "@/lib/cart";
+import { CartDrawer } from "@/components/cart-drawer";
 import { SLOT_TIMES } from "@/lib/slots";
 import { listDrinks, DRINK_SECTIONS, replaceDrinkOverrides, sectionLabel, money, type Drink } from "@/lib/drinks";
 import { listPlates, PLATE_SECTIONS, plateLabel, replacePlateOverrides, type Plate } from "@/lib/plates";
@@ -38,6 +40,18 @@ export function Site() {
 
   const [drinks, setDrinks] = useState<Drink[]>(() => listDrinks());
   const [plates, setPlates] = useState<Plate[]>(() => listPlates());
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cart, setCart] = useState<CartLine[]>([]);
+
+  useEffect(() => {
+    hydrateCart();
+    setCart(cartLines());
+    function sync() {
+      setCart(cartLines());
+    }
+    window.addEventListener("lqp-cart", sync);
+    return () => window.removeEventListener("lqp-cart", sync);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -65,6 +79,12 @@ export function Site() {
     ].filter(Boolean);
     return bits.join(". ");
   }, [form, lang]);
+
+  const count = cart.reduce((sum, line) => sum + line.qty, 0);
+
+  function qtyOf(kind: "plate" | "drink", id: string) {
+    return cart.find((line) => line.kind === kind && line.id === id)?.qty ?? 0;
+  }
 
   return (
     <div className="min-h-screen bg-bg text-fg">
@@ -103,6 +123,14 @@ export function Site() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="min-h-11 border border-line px-3 text-sm text-fg"
+            >
+              {t.cart}
+              {count > 0 ? ` · ${count}` : ""}
+            </button>
             <div className="flex border border-line text-xs tracking-widest">
               {(["es", "en"] as const).map((code) => (
                 <button
@@ -180,7 +208,15 @@ export function Site() {
                 <h3 className="font-display text-4xl italic md:text-5xl">{plateLabel[section][lang]}</h3>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {items.map((plate, index) => (
-                    <PlateStill key={plate.id} plate={plate} lang={lang} lead={index === 0} />
+                    <PlateStill
+                      key={plate.id}
+                      plate={plate}
+                      lang={lang}
+                      lead={index === 0}
+                      qty={qtyOf("plate", plate.id)}
+                      addLabel={t.cartAdd}
+                      onAdd={() => addToCart("plate", plate.id)}
+                    />
                   ))}
                 </div>
               </div>
@@ -208,10 +244,18 @@ export function Site() {
                   <h3 className="font-display text-3xl italic">{sectionLabel[section][lang]}</h3>
                   <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
                     {items.map((drink) => (
-                      <li key={drink.id} className="flex items-baseline gap-3 py-2.5 break-inside-avoid">
+                      <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
                         <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
                         <span className="leader mb-1 min-w-6 flex-1" />
                         <span className="text-brass">{money(drink.price)}</span>
+                        <button
+                          type="button"
+                          aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
+                          onClick={() => addToCart("drink", drink.id)}
+                          className="min-h-11 min-w-11 border border-line text-brass"
+                        >
+                          {qtyOf("drink", drink.id) || "+"}
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -460,20 +504,42 @@ export function Site() {
         <a href="#reservar" className="flex min-h-14 items-center justify-center text-fg">
           {t.reserve}
         </a>
-        <a
-          href={waLink(message)}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
           className="flex min-h-14 items-center justify-center bg-brass text-ink"
         >
-          WhatsApp
-        </a>
+          {t.cart}
+          {count > 0 ? ` · ${count}` : ""}
+        </button>
       </div>
+      <CartDrawer
+        open={cartOpen}
+        lang={lang}
+        plates={plates}
+        drinks={drinks}
+        lines={cart}
+        onClose={() => setCartOpen(false)}
+      />
     </div>
   );
 }
 
-function PlateStill({ plate, lang, lead }: { plate: Plate; lang: Lang; lead?: boolean }) {
+function PlateStill({
+  plate,
+  lang,
+  lead,
+  qty,
+  addLabel,
+  onAdd,
+}: {
+  plate: Plate;
+  lang: Lang;
+  lead?: boolean;
+  qty: number;
+  addLabel: string;
+  onAdd: () => void;
+}) {
   const name = lang === "es" ? plate.es : plate.en;
   const portion = lang === "es" ? plate.portionEs : plate.portionEn;
   return (
@@ -494,7 +560,12 @@ function PlateStill({ plate, lang, lead }: { plate: Plate; lang: Lang; lead?: bo
             <h4 className={`font-display leading-none italic ${lead ? "text-5xl md:text-6xl" : "text-3xl"}`}>{name}</h4>
             <p className="mt-2 max-w-md text-sm text-fg/75">{portion}</p>
           </div>
-          <span className="shrink-0 font-display text-2xl text-brass">{money(plate.price)}</span>
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <span className="font-display text-2xl text-brass">{money(plate.price)}</span>
+            <button type="button" onClick={onAdd} className="min-h-11 border border-brass bg-bg/80 px-3 text-sm text-brass">
+              {qty > 0 ? `${addLabel} · ${qty}` : addLabel}
+            </button>
+          </div>
         </figcaption>
       </figure>
     </article>

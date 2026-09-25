@@ -280,6 +280,116 @@ export async function markHold(id: string, status: "pendiente" | "confirmada" | 
   await sql`update holds set status = ${status} where id = ${id}`;
 }
 
+type OrderLineIn = { kind: "plate" | "drink"; id: string; qty: number };
+type Pay = "yappy" | "tarjeta" | "efectivo";
+
+export async function placeOrder(input: { service: "mesa" | "llevar"; pay: Pay; lines: OrderLineIn[] }) {
+  if (input.service !== "mesa" && input.service !== "llevar") throw new Error("servicio");
+  if (input.pay !== "yappy" && input.pay !== "tarjeta" && input.pay !== "efectivo") throw new Error("pago");
+  if (!Array.isArray(input.lines) || input.lines.length < 1 || input.lines.length > 24) throw new Error("pedido");
+  const menu = await readMenu();
+  const { replacePlateOverrides, listPlates } = await import("@/lib/plates");
+  const { replaceDrinkOverrides, listDrinks } = await import("@/lib/drinks");
+  replacePlateOverrides(menu.plates);
+  replaceDrinkOverrides(menu.drinks);
+  const priced = input.lines.map((line) => {
+    const qty = Math.round(line.qty);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 20) throw new Error("cantidad");
+    if (line.kind === "plate") {
+      const plate = listPlates().find((item) => item.id === line.id);
+      if (!plate?.available) throw new Error("carta");
+      return { kind: "plate" as const, id: plate.id, qty, price: plate.price };
+    }
+    if (line.kind === "drink") {
+      const drink = listDrinks().find((item) => item.id === line.id);
+      if (!drink?.available) throw new Error("carta");
+      return { kind: "drink" as const, id: drink.id, qty, price: drink.price };
+    }
+    throw new Error("carta");
+  });
+  const total = priced.reduce((sum, line) => sum + line.qty * line.price, 0);
+  const id = randomUUID();
+  const sql = await getSql();
+  await sql`
+    insert into orders (id, service, status, total, pay, pay_status)
+    values (${id}, ${input.service}, 'pendiente', ${total}, ${input.pay}, 'pendiente')
+  `;
+  for (const line of priced) {
+    await sql`
+      insert into order_lines (order_id, kind, item_id, qty, price)
+      values (${id}, ${line.kind}, ${line.id}, ${line.qty}, ${line.price})
+    `;
+  }
+  return { id };
+}
+
+export async function listOrders() {
+  assertHouse();
+  const sql = await getSql();
+  const orders = await sql<{
+    id: string;
+    service: string;
+    status: string;
+    pay: string | null;
+    pay_status: string | null;
+    total: unknown;
+    created_at: string | Date;
+  }>`
+    select id, service, status, pay, pay_status, total, created_at from orders order by created_at desc limit 80
+  `;
+  if (!orders.length) return [];
+  const { listPlates } = await import("@/lib/plates");
+  const { listDrinks } = await import("@/lib/drinks");
+  const names = new Map<string, string>();
+  for (const plate of listPlates()) names.set(`plate:${plate.id}`, plate.es);
+  for (const drink of listDrinks()) names.set(`drink:${drink.id}`, drink.es);
+  const lines = await sql.query<{
+    order_id: string;
+    kind: string;
+    item_id: string;
+    qty: number;
+    price: unknown;
+  }>("select order_id, kind, item_id, qty, price from order_lines where order_id = any($1::text[])", [
+    orders.map((order) => order.id),
+  ]);
+  return orders.map((order) => ({
+    id: order.id,
+    service: (order.service === "llevar" ? "llevar" : "mesa") as "mesa" | "llevar",
+    pay: (order.pay === "yappy" || order.pay === "tarjeta" ? order.pay : "efectivo") as "yappy" | "tarjeta" | "efectivo",
+    payStatus: (order.pay_status === "cobrado" ? "cobrado" : "pendiente") as "pendiente" | "cobrado",
+    status: (order.status === "listo" || order.status === "no" ? order.status : "pendiente") as
+      | "pendiente"
+      | "listo"
+      | "no",
+    total: Number(order.total),
+    createdAt: new Date(order.created_at).toISOString(),
+    lines: lines
+      .filter((line) => line.order_id === order.id)
+      .map((line) => ({
+        kind: (line.kind === "drink" ? "drink" : "plate") as "plate" | "drink",
+        id: line.item_id,
+        name: names.get(`${line.kind}:${line.item_id}`) ?? line.item_id,
+        qty: Number(line.qty),
+        price: Number(line.price),
+      })),
+  }));
+}
+
+export async function markOrder(id: string, status: "pendiente" | "listo" | "no") {
+  assertHouse();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("pedido");
+  const sql = await getSql();
+  await sql`update orders set status = ${status} where id = ${id}`;
+}
+
+export async function markPay(id: string, payStatus: "pendiente" | "cobrado") {
+  assertHouse();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("pedido");
+  if (payStatus !== "pendiente" && payStatus !== "cobrado") throw new Error("pago");
+  const sql = await getSql();
+  await sql`update orders set pay_status = ${payStatus} where id = ${id}`;
+}
+
 async function loadStore() {
   const sql = await getSql();
   const rows = await sql<{ doc: Store | string }>`select doc from casa_json where key = 'supplies'`;

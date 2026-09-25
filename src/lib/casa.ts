@@ -45,6 +45,52 @@ export const placeHold = createServerFn({ method: "POST" })
     return save(data);
   });
 
+export const placeOrder = createServerFn({ method: "POST" })
+  .validator(
+    (input: {
+      service: "mesa" | "llevar";
+      pay: "yappy" | "tarjeta" | "efectivo";
+      lines: { kind: "plate" | "drink"; id: string; qty: number }[];
+    }) => {
+      if (!input || (input.service !== "mesa" && input.service !== "llevar") || !Array.isArray(input.lines)) {
+        throw new Error("pedido");
+      }
+      if (input.pay !== "yappy" && input.pay !== "tarjeta" && input.pay !== "efectivo") throw new Error("pago");
+      return input;
+    },
+  )
+  .handler(async ({ data }) => {
+    const { placeOrder: save } = await import("@/lib/casa-ops.server");
+    return save(data);
+  });
+
+export const listOrders = createServerFn({ method: "GET" }).handler(async () => {
+  const { listOrders: load } = await import("@/lib/casa-ops.server");
+  return load();
+});
+
+export const markOrder = createServerFn({ method: "POST" })
+  .validator((input: { id: string; status: "pendiente" | "listo" | "no" }) => {
+    if (!input?.id || !["pendiente", "listo", "no"].includes(input.status)) throw new Error("estado");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { markOrder: save } = await import("@/lib/casa-ops.server");
+    await save(data.id, data.status);
+    return { ok: true };
+  });
+
+export const markPay = createServerFn({ method: "POST" })
+  .validator((input: { id: string; payStatus: "pendiente" | "cobrado" }) => {
+    if (!input?.id || (input.payStatus !== "pendiente" && input.payStatus !== "cobrado")) throw new Error("pago");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { markPay: save } = await import("@/lib/casa-ops.server");
+    await save(data.id, data.payStatus);
+    return { ok: true };
+  });
+
 export const listRequests = createServerFn({ method: "GET" }).handler(async () => {
   const { listHolds } = await import("@/lib/casa-ops.server");
   return listHolds();
