@@ -106,8 +106,8 @@ export function CartDrawer({
     const payLine =
       pay === "yappy"
         ? lang === "es"
-          ? `Pago: Yappy al 6755-5768. Monto ${money(round2(total))}.${phone ? ` Mi Yappy: ${phone}.` : ""}`
-          : `Payment: Yappy to 6755-5768. Amount ${money(round2(total))}.${phone ? ` My Yappy: ${phone}.` : ""}`
+          ? `Pago: Yappy al 6494-6886. Monto ${money(round2(total))}.${phone ? ` Mi Yappy: ${phone}.` : ""}`
+          : `Payment: Yappy to 6494-6886. Amount ${money(round2(total))}.${phone ? ` My Yappy: ${phone}.` : ""}`
         : pay === "tarjeta"
           ? lang === "es"
             ? "Pago: Visa o Mastercard en el datáfono."
@@ -238,7 +238,7 @@ export function CartDrawer({
                   <button
                     type="button"
                     onClick={() => {
-                      void navigator.clipboard?.writeText("67555768").then(() => {
+                      void navigator.clipboard?.writeText("64946886").then(() => {
                         setCopied(true);
                         window.setTimeout(() => setCopied(false), 1600);
                       });

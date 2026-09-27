@@ -1,6 +1,6 @@
 export type Lang = "es" | "en";
 
-export const WA_NUMBER = "50767555768";
+export const WA_NUMBER = "50764946886";
 export const WA_BASE = "Hola, quiero reservar en La Quinta Pata.";
 
 export const copy = {
@@ -105,8 +105,8 @@ export const copy = {
     payYappy: "Yappy",
     payCard: "Tarjeta",
     payCash: "Efectivo",
-    yappyLead: "Manda el monto al 6755-5768. La casa confirma cuando el Yappy llega. Esta página no cobra sola.",
-    yappyCopy: "Copiar 6755-5768",
+    yappyLead: "Manda el monto al 6494-6886. La casa confirma cuando el Yappy llega. Esta página no cobra sola.",
+    yappyCopy: "Copiar 6494-6886",
     yappyCopied: "Número copiado",
     yappyPhone: "Tu celular Yappy",
     yappyPhonePh: "6000-0000",
@@ -115,7 +115,7 @@ export const copy = {
     cardLead: "Visa o Mastercard se pasa en el datáfono. El número de la tarjeta no se escribe aquí.",
     cashLead: "Efectivo en la casa.",
     payNeed: "Elige Yappy, tarjeta o efectivo.",
-    sentYappy: "Cuando el Yappy entre al 6755-5768, la casa lo marca cobrado.",
+    sentYappy: "Cuando el Yappy entre al 6494-6886, la casa lo marca cobrado.",
     sentCard: "La casa pasa Visa o Mastercard en el datáfono. No mandes el número de la tarjeta por el chat.",
     sentCash: "Pagas en efectivo en la casa.",
     wa: "WhatsApp",
@@ -237,8 +237,8 @@ export const copy = {
     payYappy: "Yappy",
     payCard: "Card",
     payCash: "Cash",
-    yappyLead: "Send the amount to 6755-5768. The house confirms when Yappy lands. This page does not charge by itself.",
-    yappyCopy: "Copy 6755-5768",
+    yappyLead: "Send the amount to 6494-6886. The house confirms when Yappy lands. This page does not charge by itself.",
+    yappyCopy: "Copy 6494-6886",
     yappyCopied: "Number copied",
     yappyPhone: "Your Yappy phone",
     yappyPhonePh: "6000-0000",
@@ -247,7 +247,7 @@ export const copy = {
     cardLead: "Visa or Mastercard is taken on the house terminal. The card number is not typed here.",
     cashLead: "Cash at the house.",
     payNeed: "Choose Yappy, card, or cash.",
-    sentYappy: "When the Yappy hits 6755-5768, the house marks it paid.",
+    sentYappy: "When the Yappy hits 6494-6886, the house marks it paid.",
     sentCard: "The house runs Visa or Mastercard on the terminal. Do not send the card number in the chat.",
     sentCash: "You pay cash at the house.",
     wa: "WhatsApp",

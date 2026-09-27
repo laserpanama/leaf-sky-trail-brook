@@ -103,7 +103,7 @@ export function Site() {
               addressRegion: "Panamá",
               addressCountry: "PA",
             },
-            telephone: "+50767555768",
+            telephone: "+507****6886",
             sameAs: "https://www.instagram.com/laquintapata_pty/",
             currenciesAccepted: "USD",
             paymentAccepted: "Cash, Visa, Mastercard, Yappy",
@@ -300,7 +300,7 @@ export function Site() {
                 rel="noreferrer"
                 className="mt-8 inline-flex min-h-11 items-center bg-brass px-5 text-ink"
               >
-                {t.wa} · 6755-5768
+                {t.wa} · 6494-6886
               </a>
             </div>
             {held ? (
@@ -494,7 +494,7 @@ export function Site() {
 
       <footer className="border-t border-line px-5 py-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted">
-          <p className="text-fg">Av. 5ta Sur, San Francisco · 6755-5768 · @laquintapata_pty · Yappy</p>
+          <p className="text-fg">Av. 5ta Sur, San Francisco · 6494-6886 · @laquintapata_pty · Yappy</p>
           <p>{t.legal}</p>
           <p>{t.legal2}</p>
         </div>
