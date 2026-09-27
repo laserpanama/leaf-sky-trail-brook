@@ -417,7 +417,7 @@ export function Site() {
                       type="tel"
                       inputMode="tel"
                       autoComplete="tel"
-                      pattern="[+0-9 ()-]{7,20}"
+                      pattern="[+0-9 \(\)\-]{7,20}"
                       placeholder={t.phonePh}
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
