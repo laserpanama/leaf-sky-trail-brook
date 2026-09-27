@@ -32,6 +32,7 @@ export function CartDrawer({
   const [phoneBad, setPhoneBad] = useState(false);
   const [note, setNote] = useState("");
   const [sent, setSent] = useState<"yappy" | "tarjeta" | "efectivo" | null>(null);
+  const [sending, setSending] = useState(false);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -93,8 +94,8 @@ export function CartDrawer({
     return value.replace(/\D/g, "");
   }
 
-  function send() {
-    if (!live.length || !pay) return;
+  async function send() {
+    if (!live.length || !pay || sending) return;
     const phone = yappyDigits(yappyPhone);
     if (pay === "yappy" && phone && phone.length !== 8 && !(phone.length === 11 && phone.startsWith("507"))) {
       setPhoneBad(true);
@@ -119,15 +120,26 @@ export function CartDrawer({
       .map((line) => `${line.qty} × ${line.name} — ${money(round2(line.qty * line.price))}`)
       .join("\n");
     const bits = [head, where, payLine, body, `${t.cartTotal}: ${money(round2(total))} (${t.cartTax})`, note.trim()].filter(Boolean);
-    const text = bits.join("\n");
-    void placeOrder({
-      data: {
-        service,
-        pay,
-        lines: live.map((line) => ({ kind: line.kind, id: line.id, qty: line.qty })),
-      },
-    }).catch(() => undefined);
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    let text = bits.join("\n");
+
+    setSending(true);
+    try {
+      await Promise.race([
+        placeOrder({
+          data: {
+            service,
+            pay,
+            lines: live.map((line) => ({ kind: line.kind, id: line.id, qty: line.qty })),
+          },
+        }),
+        new Promise((_, reject) => window.setTimeout(() => reject(new Error("timeout")), 5000)),
+      ]);
+    } catch {
+      text += "\n⚠ Pedido no registrado en el sistema";
+    }
+    setSending(false);
+
+    window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
     clearCart();
     setNote("");
     setYappyPhone("");
@@ -288,11 +300,15 @@ export function CartDrawer({
               {!pay ? <p className="mt-3 text-sm text-brass">{t.payNeed}</p> : null}
               <button
                 type="button"
-                disabled={!live.length || !pay}
+                disabled={!live.length || !pay || sending}
                 onClick={send}
                 className="mt-5 flex min-h-11 w-full items-center justify-center bg-brass text-ink disabled:opacity-40"
               >
-                {pay === "yappy"
+                {sending
+                  ? lang === "es"
+                    ? "Guardando…"
+                    : "Saving…"
+                  : pay === "yappy"
                   ? lang === "es"
                     ? "Avisar el Yappy"
                     : "Send the Yappy"
