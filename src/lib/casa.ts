@@ -167,7 +167,20 @@ export const houseOps = createServerFn({ method: "GET" }).handler(async () => {
   return readOps();
 });
 
-export const saveOps = createServerFn({ method: "POST" })
+export const webSales = createServerFn({ method: "POST" })
+  .validator((input: { from: string; to: string }) => {
+    const day = /^\d{4}-\d{2}-\d{2}$/;
+    if (typeof input?.from !== "string" || typeof input?.to !== "string" || !day.test(input.from) || !day.test(input.to)) {
+      throw new Error("semana");
+    }
+    return { from: input.from, to: input.to };
+  })
+  .handler(async ({ data }) => {
+    const { readWebSales } = await import("@/lib/casa-ops.server");
+    return readWebSales(data.from, data.to);
+  });
+
+export const saveOps =createServerFn({ method: "POST" })
   .validator((input: { key: "labor" | "pour" | "kitchen"; doc: unknown }) => {
     if (input?.key !== "labor" && input?.key !== "pour" && input?.key !== "kitchen") throw new Error("ops");
     if (!input.doc || typeof input.doc !== "object") throw new Error("ops");

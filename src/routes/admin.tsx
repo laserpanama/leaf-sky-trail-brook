@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { houseEnter, houseLeave, houseOps, houseStatus, listOrders, listRequests, markOrder, markPay, markRequest, menuCosts, publicMenu } from "@/lib/casa";
+import { houseEnter, houseLeave, houseOps, houseStatus, webSales, listOrders, listRequests, markOrder, markPay, markRequest, menuCosts, publicMenu } from "@/lib/casa";
 import {
   DRINK_SECTIONS,
   drinkStatus,
@@ -17,7 +17,8 @@ import { Costeo } from "@/components/costeo";
 import { KitchenWeek, PlateDesk } from "@/components/cocina";
 import { Insumos } from "@/components/insumos";
 import { listPlates, replaceKitchenWeeks, replacePlateOverrides, type Plate } from "@/lib/plates";
-import { replacePour } from "@/lib/pour";
+import { panamaMonday, replacePour, shiftWeek } from "@/lib/pour";
+import { replaceWebSales } from "@/lib/web-sales";
 import { replaceLabor } from "@/lib/labor";
 import type { HoldStatus } from "@/lib/holds";
 
@@ -86,6 +87,10 @@ function Admin() {
       replaceLabor(ops.labor);
       replacePour(ops.pour);
       replaceKitchenWeeks(ops.kitchen);
+      const to = panamaMonday();
+      const from = shiftWeek(to, -11);
+      const covered = Array.from({ length: 12 }, (_, i) => shiftWeek(from, i));
+      replaceWebSales(await webSales({ data: { from, to } }), covered);
     } catch {
       /* weekly counts stay empty until the house key is open */
     }

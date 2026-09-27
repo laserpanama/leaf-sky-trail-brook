@@ -17,6 +17,7 @@ import {
   type PlateSection,
 } from "@/lib/plates";
 import { panamaMonday, shiftWeek, weekLabel } from "@/lib/pour";
+import { ensureWebWeek, webPlates, webWeeks, type WebTally } from "@/lib/web-sales";
 import { kitchenWage, laborCost, plateMinutes, setKitchenWage, setPlateMinutes } from "@/lib/labor";
 
 function pct(value: number) {
@@ -29,20 +30,35 @@ function round2(value: number) {
 
 type Line = {
   plate: Plate;
+  /** Local (typed by staff) + web (paid online orders). */
   units: number;
+  local: number;
+  web: number;
   net: number;
   cost: number;
   margin: number;
   pct: number;
 };
 
-function linesFor(weekUnits: Record<string, number>, plates: Plate[]): Line[] {
+/** Local units sell at today's menu price; web units at the price stored on the order. Both net of 7% ITBMS. */
+function linesFor(weekUnits: Record<string, number>, web: WebTally, plates: Plate[]): Line[] {
   return plates
     .map((plate) => {
-      const units = weekUnits[plate.id] ?? 0;
-      const net = units * foodNet(plate.price);
+      const local = weekUnits[plate.id] ?? 0;
+      const online = web[plate.id]?.units ?? 0;
+      const units = local + online;
+      const net = local * foodNet(plate.price) + foodNet(web[plate.id]?.gross ?? 0);
       const cost = units * plate.cost;
-      return { plate, units, net, cost, margin: net - cost, pct: foodPct(plate.cost, plate.price) };
+      return {
+        plate,
+        units,
+        local,
+        web: online,
+        net,
+        cost,
+        margin: net - cost,
+        pct: net > 0 ? cost / net : foodPct(plate.cost, plate.price),
+      };
     })
     .filter((line) => line.units > 0);
 }
@@ -61,19 +77,30 @@ function roll(lines: Line[]) {
 export function KitchenWeek({ plates }: { plates: Plate[] }) {
   const [week, setWeek] = useState(() => panamaMonday());
   const [units, setLocal] = useState<Record<string, number>>(() => plateUnits(panamaMonday()));
+  const [web, setWeb] = useState(() => webPlates(panamaMonday()));
   const [section, setSection] = useState<PlateSection | "todas">("todas");
 
   useEffect(() => {
     function sync() {
       setLocal(plateUnits(week));
     }
+    function syncWeb() {
+      setWeb(webPlates(week));
+    }
+    syncWeb();
     window.addEventListener("lqp-kitchen", sync);
-    return () => window.removeEventListener("lqp-kitchen", sync);
+    window.addEventListener("lqp-web", syncWeb);
+    return () => {
+      window.removeEventListener("lqp-kitchen", sync);
+      window.removeEventListener("lqp-web", syncWeb);
+    };
   }, [week]);
 
   function openWeek(next: string) {
     setWeek(next);
     setLocal(plateUnits(next));
+    setWeb(webPlates(next));
+    void ensureWebWeek(next);
   }
 
   function edit(id: string, raw: string) {
@@ -83,7 +110,7 @@ export function KitchenWeek({ plates }: { plates: Plate[] }) {
     setLocal(plateUnits(week));
   }
 
-  const lines = useMemo(() => linesFor(units, plates), [units, plates]);
+  const lines = useMemo(() => linesFor(units, web, plates), [units, web, plates]);
   const total = roll(lines);
   const labor = lines.reduce((sum, line) => sum + line.units * laborCost(plateMinutes(line.plate.id), kitchenWage()), 0);
   const bySection = PLATE_SECTIONS.map((key) => ({
@@ -95,14 +122,14 @@ export function KitchenWeek({ plates }: { plates: Plate[] }) {
   const leader = ranked[0];
   const richest = [...ranked].sort((a, b) => b.margin - a.margin)[0];
   const over = ranked.filter((line) => line.pct > FOOD_TARGET[line.plate.section] + 0.03);
-  const history = kitchenWeeks().slice(-8);
+  const history = [...new Set([...kitchenWeeks(), ...webWeeks("plates")])].sort().slice(-8);
   const shown = plates.filter((plate) => section === "todas" || plate.section === section);
 
   return (
     <>
       <h1 className="mt-8 font-display text-5xl">Costo de cocina</h1>
       <p className="mt-4 max-w-lg text-sm text-muted">
-        Anota los platos de la semana. El costo % es solo alimento, sin mano de obra ni gas, sobre el precio sin ITBMS. El costeo usa 7%. Confirme la tasa.
+        Web son los platos de pedidos en línea cobrados, al precio que se cobró; se suman solos. Local es lo que anotas a mano: no repitas lo que ya entró por web. El costo % es solo alimento, sin mano de obra ni gas, sobre el precio sin ITBMS. El costeo usa 7%. Confirme la tasa.
       </p>
       <div className="mt-8 flex items-center justify-between gap-3">
         <button type="button" className="min-h-11 border border-line px-4" onClick={() => openWeek(shiftWeek(week, -1))}>
@@ -163,7 +190,7 @@ export function KitchenWeek({ plates }: { plates: Plate[] }) {
       {history.length > 1 ? (
         <ul className="mt-8 divide-y divide-line border-y border-line">
           {history.map((key) => {
-            const summary = roll(linesFor(plateUnits(key), plates));
+            const summary = roll(linesFor(plateUnits(key), webPlates(key), plates));
             return (
               <li key={key}>
                 <button type="button" className="flex min-h-11 w-full items-center justify-between" onClick={() => openWeek(key)}>
@@ -196,26 +223,36 @@ export function KitchenWeek({ plates }: { plates: Plate[] }) {
         ))}
       </div>
       <ul className="mt-4 divide-y divide-line border-y border-line">
-        {shown.map((plate) => (
-          <li key={plate.id} className="grid grid-cols-[1fr_auto] items-center gap-3 py-3">
-            <div>
-              <p className="font-display text-2xl">{plate.es}</p>
-              <p className="text-sm text-muted">
-                {money(plate.price)} · costo {pct(foodPct(plate.cost, plate.price))}
-              </p>
-            </div>
-            <input
-              inputMode="numeric"
-              min={0}
-              type="number"
-              value={units[plate.id] ?? ""}
-              placeholder="0"
-              aria-label={`Vendidos, ${plate.es}`}
-              onChange={(e) => edit(plate.id, e.target.value)}
-              className="min-h-11 w-20 border border-line bg-bg px-2 text-fg"
-            />
-          </li>
-        ))}
+        {shown.map((plate) => {
+          const online = web[plate.id]?.units ?? 0;
+          return (
+            <li key={plate.id} className="grid grid-cols-[1fr_auto] items-center gap-3 py-3">
+              <div>
+                <p className="font-display text-2xl">{plate.es}</p>
+                <p className="text-sm text-muted">
+                  {money(plate.price)} · costo {pct(foodPct(plate.cost, plate.price))}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-muted">
+                <span>Web {online}</span>
+                <label>
+                  Local
+                  <input
+                    inputMode="numeric"
+                    min={0}
+                    type="number"
+                    value={units[plate.id] ?? ""}
+                    placeholder="0"
+                    aria-label={`Local, ${plate.es}`}
+                    onChange={(e) => edit(plate.id, e.target.value)}
+                    className="ml-2 min-h-11 w-20 border border-line bg-bg px-2 text-fg"
+                  />
+                </label>
+                <span className="text-fg">Total {online + (units[plate.id] ?? 0)}</span>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </>
   );

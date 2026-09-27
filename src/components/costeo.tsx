@@ -13,6 +13,7 @@ import {
   weekLabel,
   weekLines,
 } from "@/lib/pour";
+import { ensureWebWeek, webDrinks, webWeeks } from "@/lib/web-sales";
 
 function pct(value: number) {
   return `${(value * 100).toFixed(1)}%`;
@@ -21,19 +22,30 @@ function pct(value: number) {
 export function Costeo({ drinks }: { drinks: Drink[] }) {
   const [week, setWeek] = useState(() => panamaMonday());
   const [units, setLocal] = useState<Record<string, number>>(() => unitsFor(panamaMonday()));
+  const [web, setWeb] = useState(() => webDrinks(panamaMonday()));
   const [section, setSection] = useState<DrinkSection | "cocteles">("cocteles");
 
   useEffect(() => {
     function sync() {
       setLocal(unitsFor(week));
     }
+    function syncWeb() {
+      setWeb(webDrinks(week));
+    }
+    syncWeb();
     window.addEventListener("lqp-pour", sync);
-    return () => window.removeEventListener("lqp-pour", sync);
+    window.addEventListener("lqp-web", syncWeb);
+    return () => {
+      window.removeEventListener("lqp-pour", sync);
+      window.removeEventListener("lqp-web", syncWeb);
+    };
   }, [week]);
 
   function openWeek(next: string) {
     setWeek(next);
     setLocal(unitsFor(next));
+    setWeb(webDrinks(next));
+    void ensureWebWeek(next);
   }
 
   function edit(id: string, raw: string) {
@@ -43,14 +55,14 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
     setLocal(unitsFor(week));
   }
 
-  const lines = useMemo(() => weekLines(units, drinks), [units, drinks]);
+  const lines = useMemo(() => weekLines(units, web, drinks), [units, web, drinks]);
   const total = sumLines(lines);
   const sections = sectionRollup(lines);
   const cocktails = topCocktails(lines);
   const leader = cocktails[0];
   const richest = [...cocktails].sort((a, b) => b.margin - a.margin)[0];
   const over = cocktails.filter((line) => line.pct > 0.2);
-  const history = savedWeeks().slice(-8);
+  const history = [...new Set([...savedWeeks(), ...webWeeks("drinks")])].sort().slice(-8);
   const shown = drinks.filter((drink) =>
     section === "cocteles" ? drink.section === "casa" || drink.section === "clasico" : drink.section === section,
   );
@@ -59,7 +71,7 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
     <>
       <h1 className="mt-8 font-display text-5xl">Costo semanal</h1>
       <p className="mt-4 max-w-lg text-sm text-muted">
-        Anota los tragos vendidos. El costo % es el de la receta sobre el precio sin ITBMS, con el 10% del costeo. No sale de una caja registradora.
+        Web son los tragos de pedidos en línea cobrados, al precio que se cobró; se suman solos. Local es lo que anotas a mano: no repitas lo que ya entró por web. El costo % es el de la receta sobre la venta sin ITBMS de cada trago. No sale de una caja registradora.
       </p>
       <div className="mt-8 flex items-center justify-between gap-3">
         <button type="button" className="min-h-11 border border-line px-4" onClick={() => openWeek(shiftWeek(week, -1))}>
@@ -125,7 +137,7 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
           <h2 className="font-display text-3xl italic">Semanas</h2>
           <ul className="mt-3 divide-y divide-line border-y border-line">
             {history.map((key) => {
-              const roll = sumLines(weekLines(unitsFor(key), drinks));
+              const roll = sumLines(weekLines(unitsFor(key), webDrinks(key), drinks));
               return (
                 <li key={key}>
                   <button type="button" className="flex min-h-11 w-full items-center justify-between" onClick={() => openWeek(key)}>
@@ -160,26 +172,36 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
         ))}
       </div>
       <ul className="mt-4 divide-y divide-line border-y border-line">
-        {shown.map((drink) => (
-          <li key={drink.id} className="grid grid-cols-[1fr_auto] items-center gap-3 py-3">
-            <div>
-              <p className="font-display text-2xl">{drink.es}</p>
-              <p className="text-sm text-muted">
-                {money(drink.price)} · costo {pct(pourPct(drink.cost, drink.price))}
-              </p>
-            </div>
-            <input
-              inputMode="numeric"
-              min={0}
-              type="number"
-              value={units[drink.id] ?? ""}
-              placeholder="0"
-              aria-label={`Vendidos, ${drink.es}`}
-              onChange={(e) => edit(drink.id, e.target.value)}
-              className="min-h-11 w-20 border border-line bg-bg px-2 text-fg"
-            />
-          </li>
-        ))}
+        {shown.map((drink) => {
+          const online = web[drink.id]?.units ?? 0;
+          return (
+            <li key={drink.id} className="grid grid-cols-[1fr_auto] items-center gap-3 py-3">
+              <div>
+                <p className="font-display text-2xl">{drink.es}</p>
+                <p className="text-sm text-muted">
+                  {money(drink.price)} · costo {pct(pourPct(drink.cost, drink.price, drink.section, drink.id))}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-muted">
+                <span>Web {online}</span>
+                <label>
+                  Local
+                  <input
+                    inputMode="numeric"
+                    min={0}
+                    type="number"
+                    value={units[drink.id] ?? ""}
+                    placeholder="0"
+                    aria-label={`Local, ${drink.es}`}
+                    onChange={(e) => edit(drink.id, e.target.value)}
+                    className="ml-2 min-h-11 w-20 border border-line bg-bg px-2 text-fg"
+                  />
+                </label>
+                <span className="text-fg">Total {online + (units[drink.id] ?? 0)}</span>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </>
   );

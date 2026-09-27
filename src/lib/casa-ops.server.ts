@@ -390,6 +390,43 @@ export async function markPay(id: string, payStatus: "pendiente" | "cobrado") {
   await sql`update orders set pay_status = ${payStatus} where id = ${id}`;
 }
 
+/** gross = Σ qty × price stored on the order line (what was actually charged), ITBMS included. */
+export type WebTally = Record<string, { units: number; gross: number }>;
+export type WebWeek = { drinks: WebTally; plates: WebTally };
+
+const WEB_MAX_WEEKS = 26;
+
+/** Units and gross sales from paid web orders, grouped by Panama week (Monday). Cancelled orders ("no") are left out. */
+export async function readWebSales(from: string, to: string) {
+  assertHouse();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error("semana");
+  if (addDaysIso(from, WEB_MAX_WEEKS * 7) < to) throw new Error("semana");
+  // Panama is UTC-5 all year (no DST), so a fixed offset gives the local week bounds.
+  const start = `${from}T00:00:00-05:00`;
+  const end = `${addDaysIso(to, 7)}T00:00:00-05:00`;
+  const sql = await getSql();
+  const rows = await sql<{ created_at: string | Date; kind: string; item_id: string; qty: number; price: unknown }>`
+    select o.created_at, l.kind, l.item_id, l.qty, l.price
+    from orders o join order_lines l on l.order_id = o.id
+    where o.pay_status = 'cobrado' and o.status <> 'no'
+      and o.created_at >= ${start}::timestamptz and o.created_at < ${end}::timestamptz
+  `;
+  const { panamaMonday } = await import("@/lib/pour");
+  const out: Record<string, WebWeek> = {};
+  for (const row of rows) {
+    const qty = Number(row.qty);
+    const price = Number(row.price);
+    if (!Number.isFinite(qty) || !Number.isFinite(price) || qty <= 0) continue;
+    const week = panamaMonday(new Date(row.created_at));
+    const bucket = (out[week] ??= { drinks: {}, plates: {} });
+    const tally = row.kind === "drink" ? bucket.drinks : bucket.plates;
+    const item = (tally[row.item_id] ??= { units: 0, gross: 0 });
+    item.units += qty;
+    item.gross += qty * price;
+  }
+  return out;
+}
+
 async function loadStore() {
   const sql = await getSql();
   const rows = await sql<{ doc: Store | string }>`select doc from casa_json where key = 'supplies'`;

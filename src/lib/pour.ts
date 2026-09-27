@@ -85,26 +85,41 @@ export function savedWeeks() {
 
 export type PourLine = {
   drink: Drink;
+  /** Local (typed by staff) + web (paid online orders). */
   units: number;
+  local: number;
+  web: number;
   net: number;
   cost: number;
   margin: number;
   pct: number;
 };
 
-export function weekLines(units: Record<string, number>, drinks = listDrinks()): PourLine[] {
+/**
+ * Local units sell at today's menu price; web units at the price stored on the order (what was charged).
+ * Both are taken net of each drink's own ITBMS rate.
+ */
+export function weekLines(
+  units: Record<string, number>,
+  web: Record<string, { units: number; gross: number }> = {},
+  drinks = listDrinks(),
+): PourLine[] {
   return drinks
     .map((drink) => {
-      const count = units[drink.id] ?? 0;
-      const net = count * netOf(drink.price, drink.section, drink.id);
+      const local = units[drink.id] ?? 0;
+      const online = web[drink.id]?.units ?? 0;
+      const count = local + online;
+      const net = local * netOf(drink.price, drink.section, drink.id) + netOf(web[drink.id]?.gross ?? 0, drink.section, drink.id);
       const cost = count * drink.cost;
       return {
         drink,
         units: count,
+        local,
+        web: online,
         net,
         cost,
         margin: net - cost,
-        pct: pourPct(drink.cost, drink.price, drink.section, drink.id),
+        pct: net > 0 ? cost / net : pourPct(drink.cost, drink.price, drink.section, drink.id),
       };
     })
     .filter((line) => line.units > 0);
