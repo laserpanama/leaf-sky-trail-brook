@@ -35,6 +35,20 @@ const labels: Record<HoldStatus, string> = {
   no: "No",
 };
 
+function panamaToday() {
+  const iso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Panama",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  return iso.slice(0, 10);
+}
+
+function holdKey(hold: { date: string; time: string }) {
+  return `${hold.date} ${hold.time}`;
+}
+
 function Admin() {
   const [tab, setTab] = useState<"reservas" | "pedidos" | "barra" | "cocina" | "insumos" | "costo">("reservas");
   const [open, setOpen] = useState<boolean | null>(null);
@@ -57,6 +71,7 @@ function Admin() {
     }>
   >([]);
   const [filter, setFilter] = useState<HoldStatus | "todas">("pendiente");
+  const [pastOpen, setPastOpen] = useState(false);
   const [orderFilter, setOrderFilter] = useState<"pendiente" | "listo" | "no" | "todas">("pendiente");
   const [drinks, setDrinksState] = useState<Drink[]>([]);
   const [plates, setPlates] = useState<Plate[]>([]);
@@ -119,6 +134,13 @@ function Admin() {
   }, []);
 
   const shown = holds.filter((hold) => filter === "todas" || hold.status === filter);
+  const todayFull = panamaToday();
+  const upcoming = shown
+    .filter((hold) => hold.date >= todayFull)
+    .sort((a, b) => holdKey(a).localeCompare(holdKey(b)));
+  const past = shown
+    .filter((hold) => hold.date < todayFull)
+    .sort((a, b) => holdKey(b).localeCompare(holdKey(a)));
   const shownOrders = orders.filter((order) => orderFilter === "todas" || order.status === orderFilter);
   const shownDrinks = drinks.filter((drink) => section === "todas" || drink.section === section);
 
@@ -243,51 +265,111 @@ function Admin() {
                 </button>
               ))}
             </div>
-            {shown.length === 0 ? (
+            {upcoming.length === 0 && past.length === 0 ? (
               <p className="mt-12 font-display text-3xl text-muted">Nada en esta lista.</p>
             ) : (
-              <ul className="mt-8 divide-y divide-line border-y border-line">
-                {shown.map((hold) => (
-                  <li key={hold.id} className="grid gap-4 py-6 sm:grid-cols-[1fr_auto] sm:items-start">
-                    <div>
-                      <p className="font-display text-3xl">
-                        {hold.date} · {hold.time}
-                      </p>
-                      <p className="mt-1 text-sm text-muted">
-                        {hold.party} {Number(hold.party) === 1 ? "persona" : "personas"} · {labels[hold.status]}
-                      </p>
-                      {hold.name ? <p className="mt-2 text-fg">{hold.name}</p> : null}
-                      {hold.phone ? (
-                        <a
-                          className="mt-1 inline-flex min-h-11 items-center text-brass underline"
-                          target="_blank"
-                          rel="noreferrer"
-                          href={`https://wa.me/${hold.phone.replace(/\D/g, "").replace(/^(?=[6-9]\d{7}$)/, "507")}`}
-                        >
-                          {hold.phone}
-                        </a>
-                      ) : null}
-                      {hold.notes ? <p className="mt-3 max-w-md text-fg">{hold.notes}</p> : null}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(["pendiente", "confirmada", "no"] as const).map((status) => (
-                        <button
-                          key={status}
-                          type="button"
-                          onClick={() => mark(hold.id, status)}
-                          className={
-                            hold.status === status
-                              ? "min-h-11 bg-brass px-3 text-sm text-ink"
-                              : "min-h-11 border border-line px-3 text-sm text-muted"
-                          }
-                        >
-                          {labels[status]}
-                        </button>
-                      ))}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <>
+                {upcoming.length > 0 ? (
+                  <ul className="mt-8 divide-y divide-line border-y border-line">
+                    {upcoming.map((hold) => (
+                      <li key={hold.id} className="grid gap-4 py-6 sm:grid-cols-[1fr_auto] sm:items-start">
+                        <div>
+                          <p className="font-display text-3xl">
+                            {hold.date} · {hold.time}
+                          </p>
+                          <p className="mt-1 text-sm text-muted">
+                            {hold.party} {Number(hold.party) === 1 ? "persona" : "personas"} · {labels[hold.status]}
+                          </p>
+                          {hold.name ? <p className="mt-2 text-fg">{hold.name}</p> : null}
+                          {hold.phone ? (
+                            <a
+                              className="mt-1 inline-flex min-h-11 items-center text-brass underline"
+                              target="_blank"
+                              rel="noreferrer"
+                              href={`https://wa.me/${hold.phone.replace(/\D/g, "").replace(/^(?=[6-9]\d{7}$)/, "507")}`}
+                            >
+                              {hold.phone}
+                            </a>
+                          ) : null}
+                          {hold.notes ? <p className="mt-3 max-w-md text-fg">{hold.notes}</p> : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(["pendiente", "confirmada", "no"] as const).map((status) => (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => mark(hold.id, status)}
+                              className={
+                                hold.status === status
+                                  ? "min-h-11 bg-brass px-3 text-sm text-ink"
+                                  : "min-h-11 border border-line px-3 text-sm text-muted"
+                              }
+                            >
+                              {labels[status]}
+                            </button>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-12 font-display text-3xl text-muted">Sin reservas desde hoy.</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPastOpen(!pastOpen)}
+                  className="mt-6 min-h-11 w-full border border-line px-4 text-muted"
+                >
+                  {pastOpen ? "▾" : "▸"} Pasadas {past.length > 0 ? `(${past.length})` : ""}
+                </button>
+                {pastOpen ? (
+                  <ul className="mt-8 divide-y divide-line border-y border-line">
+                    {past.map((hold) => (
+                      <li key={hold.id} className="grid gap-4 py-6 sm:grid-cols-[1fr_auto] sm:items-start">
+                        <div>
+                          <p className="font-display text-3xl">
+                            {hold.date} · {hold.time}
+                          </p>
+                          <p className="mt-1 text-sm text-muted">
+                            {hold.party} {Number(hold.party) === 1 ? "persona" : "personas"} · {labels[hold.status]}
+                            {hold.status === "pendiente" ? (
+                              <span className="ml-2 rounded bg-brass px-2 py-0.5 text-ink">Sin confirmar</span>
+                            ) : null}
+                          </p>
+                          {hold.name ? <p className="mt-2 text-fg">{hold.name}</p> : null}
+                          {hold.phone ? (
+                            <a
+                              className="mt-1 inline-flex min-h-11 items-center text-brass underline"
+                              target="_blank"
+                              rel="noreferrer"
+                              href={`https://wa.me/${hold.phone.replace(/\D/g, "").replace(/^(?=[6-9]\d{7}$)/, "507")}`}
+                            >
+                              {hold.phone}
+                            </a>
+                          ) : null}
+                          {hold.notes ? <p className="mt-3 max-w-md text-fg">{hold.notes}</p> : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(["pendiente", "confirmada", "no"] as const).map((status) => (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => mark(hold.id, status)}
+                              className={
+                                hold.status === status
+                                  ? "min-h-11 bg-brass px-3 text-sm text-ink"
+                                  : "min-h-11 border border-line px-3 text-sm text-muted"
+                              }
+                            >
+                              {labels[status]}
+                            </button>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </>
             )}
           </>
         ) : tab === "pedidos" ? (
