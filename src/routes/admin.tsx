@@ -56,7 +56,7 @@ function Admin() {
   const [denied, setDenied] = useState<"" | "key" | "wait" | "config">("");
   const [configured, setConfigured] = useState(true);
   const [holds, setHolds] = useState<
-    Array<{ id: string; date: string; time: string; party: number; status: HoldStatus; name: string; phone: string; notes: string }>
+    Array<{ id: string; date: string; time: string; party: number; status: HoldStatus; name: string; phone: string; notes: string; code: string; source: string }>
   >([]);
   const [orders, setOrders] = useState<
     Array<{
@@ -281,6 +281,11 @@ function Admin() {
                             {hold.party} {Number(hold.party) === 1 ? "persona" : "personas"} · {labels[hold.status]}
                           </p>
                           {hold.name ? <p className="mt-2 text-fg">{hold.name}</p> : null}
+                          {hold.code || hold.source !== "web" ? (
+                            <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+                              {[hold.code, hold.source === "web" ? "web" : hold.source].filter(Boolean).join(" · ")}
+                            </p>
+                          ) : null}
                           {hold.phone ? (
                             <a
                               className="mt-1 inline-flex min-h-11 items-center text-brass underline"
@@ -337,6 +342,11 @@ function Admin() {
                             ) : null}
                           </p>
                           {hold.name ? <p className="mt-2 text-fg">{hold.name}</p> : null}
+                          {hold.code || hold.source !== "web" ? (
+                            <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+                              {[hold.code, hold.source === "web" ? "web" : hold.source].filter(Boolean).join(" · ")}
+                            </p>
+                          ) : null}
                           {hold.phone ? (
                             <a
                               className="mt-1 inline-flex min-h-11 items-center text-brass underline"

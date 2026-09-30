@@ -238,6 +238,9 @@ export async function placeHold(input: HoldInput) {
     insert into holds (id, day, slot, party, status, name, phone, notes, ip_hash)
     values (${id}, ${hold.date}, ${hold.time}, ${hold.party}, 'pendiente', ${hold.name}, ${hold.phone}, ${hold.notes}, ${ip})
   `;
+  // Staff alert with Confirm / Decline buttons (no-op when Telegram isn't configured).
+  const { notifyStaff } = await import("@/lib/agent/telegram.server");
+  await notifyStaff({ id, ...hold, status: "pendiente", source: "web-form" }, "nueva").catch(() => undefined);
   return { id };
 }
 
@@ -253,8 +256,10 @@ export async function listHolds() {
     name: string | null;
     phone: string | null;
     notes: string | null;
+    code: string | null;
+    source: string | null;
   }>`
-    select id, day, slot, party, status, name, phone, notes from holds
+    select id, day, slot, party, status, name, phone, notes, code, source from holds
     where day >= to_char(now() - interval '7 days', 'YYYY-MM-DD')
     order by day, slot, created_at
     limit 500
@@ -271,6 +276,8 @@ export async function listHolds() {
     name: row.name ?? "",
     phone: row.phone ?? "",
     notes: row.notes ?? "",
+    code: row.code ?? "",
+    source: row.source ?? "web",
   }));
 }
 
