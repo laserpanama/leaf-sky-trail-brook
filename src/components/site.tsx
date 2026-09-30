@@ -8,6 +8,7 @@ import { WA_BASE, WA_NUMBER, copy, type Lang } from "@/lib/copy";
 import { placeHold, publicMenu } from "@/lib/casa";
 import { addToCart, cartLines, hydrateCart, type CartLine } from "@/lib/cart";
 import { CartDrawer } from "@/components/cart-drawer";
+import { AgentChat } from "@/components/agent-chat";
 import { SLOT_TIMES } from "@/lib/slots";
 import { listDrinks, DRINK_SECTIONS, replaceDrinkOverrides, sectionLabel, money, type Drink } from "@/lib/drinks";
 import { listPlates, PLATE_SECTIONS, plateLabel, replacePlateOverrides, type Plate } from "@/lib/plates";
@@ -521,6 +522,7 @@ export function Site() {
         lines={cart}
         onClose={() => setCartOpen(false)}
       />
+      <AgentChat lang={lang} />
     </div>
   );
 }

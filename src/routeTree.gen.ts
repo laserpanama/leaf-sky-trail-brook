@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CasaFileRouteImport } from './routes/casa/$file'
+import { Route as ApiAgentChatRouteImport } from './routes/api/agent/chat'
+import { Route as ApiAgentTelegramRouteImport } from './routes/api/agent/telegram'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +30,60 @@ const CasaFileRoute = CasaFileRouteImport.update({
   path: '/casa/$file',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAgentChatRoute = ApiAgentChatRouteImport.update({
+  id: '/api/agent/chat',
+  path: '/api/agent/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAgentTelegramRoute = ApiAgentTelegramRouteImport.update({
+  id: '/api/agent/telegram',
+  path: '/api/agent/telegram',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/casa/$file': typeof CasaFileRoute
+  '/api/agent/chat': typeof ApiAgentChatRoute
+  '/api/agent/telegram': typeof ApiAgentTelegramRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/casa/$file': typeof CasaFileRoute
+  '/api/agent/chat': typeof ApiAgentChatRoute
+  '/api/agent/telegram': typeof ApiAgentTelegramRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/casa/$file': typeof CasaFileRoute
+  '/api/agent/chat': typeof ApiAgentChatRoute
+  '/api/agent/telegram': typeof ApiAgentTelegramRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/casa/$file'
+  fullPaths:
+    '/' | '/admin' | '/casa/$file' | '/api/agent/chat' | '/api/agent/telegram'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/casa/$file'
-  id: '__root__' | '/' | '/admin' | '/casa/$file'
+  to: '/' | '/admin' | '/casa/$file' | '/api/agent/chat' | '/api/agent/telegram'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/casa/$file'
+    | '/api/agent/chat'
+    | '/api/agent/telegram'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   CasaFileRoute: typeof CasaFileRoute
+  ApiAgentChatRoute: typeof ApiAgentChatRoute
+  ApiAgentTelegramRoute: typeof ApiAgentTelegramRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +109,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CasaFileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/agent/chat': {
+      id: '/api/agent/chat'
+      path: '/api/agent/chat'
+      fullPath: '/api/agent/chat'
+      preLoaderRoute: typeof ApiAgentChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/agent/telegram': {
+      id: '/api/agent/telegram'
+      path: '/api/agent/telegram'
+      fullPath: '/api/agent/telegram'
+      preLoaderRoute: typeof ApiAgentTelegramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +130,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   CasaFileRoute: CasaFileRoute,
+  ApiAgentChatRoute: ApiAgentChatRoute,
+  ApiAgentTelegramRoute: ApiAgentTelegramRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
