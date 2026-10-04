@@ -109,8 +109,9 @@ export const markRequest = createServerFn({ method: "POST" })
   });
 
 export const houseStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { houseOpen, houseConfigured } = await import("@/lib/casa-ops.server");
-  return { open: houseOpen(), configured: houseConfigured() };
+  const { houseRole, houseConfigured } = await import("@/lib/casa-ops.server");
+  const role = houseRole();
+  return { open: role !== null, role, configured: houseConfigured() };
 });
 
 export const houseLeave = createServerFn({ method: "POST" }).handler(async () => {

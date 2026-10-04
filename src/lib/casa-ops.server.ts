@@ -6,10 +6,14 @@ import { SLOT_TIMES } from "@/lib/slots";
 import type { Store } from "@/lib/books/engine";
 
 /**
- * House (admin) access.
- * - CASA_PASSWORD: the key staff type in /admin. Never commit it.
- * - CASA_SECRET:   32+ random chars used to sign sessions. Rotate it to log everyone out.
- * Missing or weak config => the house stays closed (fail closed).
+ * House (admin) access, by role.
+ * - CASA_PASSWORD:    gerencia — everything, including costs. Never commit it.
+ * - CASA_KEY_MESERO:  mesero   — take orders by table, see reservations.
+ * - CASA_KEY_COCINA:  cocina   — kitchen tickets, switch dishes off.
+ * - CASA_KEY_BARRA:   barra    — bar tickets, the till (charge tables), switch drinks off.
+ * - CASA_SECRET:      32+ random chars used to sign sessions. Rotate it to log everyone out.
+ * Each key must be 10+ chars and distinct; a missing role key just means that role can't log in.
+ * Missing or weak gerencia config => the house stays closed (fail closed).
  */
 export const COOKIE = "lqp_casa";
 const SESSION_SECONDS = 60 * 60 * 24 * 14;
@@ -17,15 +21,36 @@ const LOGIN_WINDOW_MIN = 15;
 const LOGIN_MAX_PER_IP = 5;
 const LOGIN_MAX_GLOBAL = 40;
 
+export type HouseRole = "gerencia" | "mesero" | "cocina" | "barra";
+export const HOUSE_ROLES: HouseRole[] = ["gerencia", "mesero", "cocina", "barra"];
+const ROLE_ENV: Record<HouseRole, string> = {
+  gerencia: "CASA_PASSWORD",
+  mesero: "CASA_KEY_MESERO",
+  cocina: "CASA_KEY_COCINA",
+  barra: "CASA_KEY_BARRA",
+};
+
 function houseConfig() {
   const pass = env("CASA_PASSWORD");
   const secret = env("CASA_SECRET");
   if (!pass || pass.length < 10 || !secret || secret.length < 32) return null;
-  return { pass, secret };
+  const keys: Partial<Record<HouseRole, string>> = { gerencia: pass };
+  for (const role of HOUSE_ROLES) {
+    if (role === "gerencia") continue;
+    const key = env(ROLE_ENV[role]);
+    // Too short, or reused from another role, is ignored: a key must identify exactly one role.
+    if (key && key.length >= 10 && !Object.values(keys).includes(key)) keys[role] = key;
+  }
+  return { pass, secret, keys };
 }
 
 export function houseConfigured() {
   return houseConfig() !== null;
+}
+
+export function configuredRoles(): HouseRole[] {
+  const cfg = houseConfig();
+  return cfg ? HOUSE_ROLES.filter((role) => cfg.keys[role]) : [];
 }
 
 function hmac(secret: string, value: string) {
@@ -39,21 +64,29 @@ function safeEqual(a: string, b: string) {
   return timingSafeEqual(left, right);
 }
 
-/** Session = "<expiresAt>.<hmac(expiresAt|passwordFingerprint)>". Changing the password or the secret revokes all sessions. */
-function signSession(expires: number) {
+/**
+ * Session = "<expiresAt>.<role>.<hmac(expiresAt|role|keyFingerprint)>".
+ * Changing a role's key revokes that role's sessions; changing the secret revokes all.
+ */
+function signSession(expires: number, role: HouseRole) {
   const cfg = houseConfig();
-  if (!cfg) return null;
-  const fingerprint = createHash("sha256").update(cfg.pass).digest("hex");
-  return `${expires}.${hmac(cfg.secret, `${expires}|${fingerprint}`)}`;
+  const key = cfg?.keys[role];
+  if (!cfg || !key) return null;
+  const fingerprint = createHash("sha256").update(key).digest("hex");
+  return `${expires}.${role}.${hmac(cfg.secret, `${expires}|${role}|${fingerprint}`)}`;
+}
+
+export function sessionRole(token: string | undefined | null): HouseRole | null {
+  if (!token) return null;
+  const [raw, role, mac] = token.split(".");
+  const expires = Number(raw);
+  if (!mac || !HOUSE_ROLES.includes(role as HouseRole) || !Number.isFinite(expires) || expires * 1000 < Date.now()) return null;
+  const expected = signSession(expires, role as HouseRole);
+  return expected && safeEqual(token, expected) ? (role as HouseRole) : null;
 }
 
 export function verifySession(token: string | undefined | null) {
-  if (!token) return false;
-  const [raw, mac] = token.split(".");
-  const expires = Number(raw);
-  if (!mac || !Number.isFinite(expires) || expires * 1000 < Date.now()) return false;
-  const expected = signSession(expires);
-  return Boolean(expected && safeEqual(token, expected));
+  return sessionRole(token) === "gerencia";
 }
 
 export function readCookieHeader(header: string | null, name: string) {
@@ -65,8 +98,20 @@ export function readCookieHeader(header: string | null, name: string) {
   return undefined;
 }
 
+export function houseRole(): HouseRole | null {
+  return sessionRole(getCookie(COOKIE));
+}
+
+/** Full house (gerencia). Every pre-existing admin function keeps requiring this. */
 export function houseOpen() {
-  return verifySession(getCookie(COOKIE));
+  return houseRole() === "gerencia";
+}
+
+/** Gerencia always passes; otherwise the session's role must be listed. Returns the role. */
+export function assertRole(...roles: HouseRole[]): HouseRole {
+  const role = houseRole();
+  if (!role || (role !== "gerencia" && !roles.includes(role))) throw new Error("cerrado");
+  return role;
 }
 
 export function ipKey() {
@@ -83,7 +128,7 @@ export function ipKey() {
   return createHash("sha256").update(`${salt}|${hop}`).digest("hex").slice(0, 32);
 }
 
-export type EnterResult = { open: boolean; reason?: "config" | "wait" | "key" };
+export type EnterResult = { open: boolean; role?: HouseRole; reason?: "config" | "wait" | "key" };
 
 export async function enterHouse(password: string): Promise<EnterResult> {
   const cfg = houseConfig();
@@ -101,22 +146,28 @@ export async function enterHouse(password: string): Promise<EnterResult> {
   if (Number(mine?.n) >= LOGIN_MAX_PER_IP || Number(all?.n) >= LOGIN_MAX_GLOBAL) {
     return { open: false, reason: "wait" };
   }
-  // Compare fixed-length MACs so length never leaks.
-  if (!safeEqual(hmac(cfg.secret, password), hmac(cfg.secret, cfg.pass))) {
+  // Compare fixed-length MACs so length never leaks; check every role so timing doesn't reveal which matched.
+  const typed = hmac(cfg.secret, password);
+  let role: HouseRole | null = null;
+  for (const candidate of HOUSE_ROLES) {
+    const key = cfg.keys[candidate];
+    if (key && safeEqual(typed, hmac(cfg.secret, key)) && !role) role = candidate;
+  }
+  if (!role) {
     await sql`insert into casa_attempts (ip_hash) values (${ip})`;
     await sql`delete from casa_attempts where at < now() - interval '1 day'`;
     return { open: false, reason: "key" };
   }
   await sql`delete from casa_attempts where ip_hash = ${ip}`;
   const expires = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  setCookie(COOKIE, signSession(expires)!, {
+  setCookie(COOKIE, signSession(expires, role)!, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
     maxAge: SESSION_SECONDS,
   });
-  return { open: true };
+  return { open: true, role };
 }
 
 export function leaveHouse() {
@@ -245,7 +296,7 @@ export async function placeHold(input: HoldInput) {
 }
 
 export async function listHolds() {
-  assertHouse();
+  assertRole("mesero");
   const sql = await getSql();
   const rows = await sql<{
     id: string;
@@ -282,7 +333,7 @@ export async function listHolds() {
 }
 
 export async function markHold(id: string, status: "pendiente" | "confirmada" | "no") {
-  assertHouse();
+  assertRole("mesero");
   const sql = await getSql();
   await sql`update holds set status = ${status} where id = ${id}`;
 }

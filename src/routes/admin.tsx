@@ -17,6 +17,7 @@ import { Costeo } from "@/components/costeo";
 import { KitchenWeek, PlateDesk } from "@/components/cocina";
 import { Insumos } from "@/components/insumos";
 import { ReputationDesk } from "@/components/reputacion";
+import { CajaDesk, MesasDesk, StationDesk } from "@/components/servicio";
 import { listPlates, replaceKitchenWeeks, replacePlateOverrides, type Plate } from "@/lib/plates";
 import { panamaMonday, replacePour, shiftWeek } from "@/lib/pour";
 import { replaceWebSales } from "@/lib/web-sales";
@@ -50,8 +51,41 @@ function holdKey(hold: { date: string; time: string }) {
   return `${hold.date} ${hold.time}`;
 }
 
+type Tab = "reservas" | "pedidos" | "mesas" | "kcocina" | "kbarra" | "caja" | "resenas" | "barra" | "cocina" | "insumos" | "costo";
+type Role = "gerencia" | "mesero" | "cocina" | "barra";
+
+/** What each key opens. Gerencia sees everything; the floor roles only what their shift needs (never costs). */
+const ROLE_TABS: Record<Role, Array<[Tab, string]>> = {
+  gerencia: [
+    ["reservas", "Reservas"],
+    ["pedidos", "Pedidos"],
+    ["mesas", "Mesas"],
+    ["kcocina", "Cocina en vivo"],
+    ["kbarra", "Barra en vivo"],
+    ["caja", "Caja"],
+    ["resenas", "Reseñas"],
+    ["cocina", "Platos"],
+    ["barra", "Tragos"],
+    ["insumos", "Insumos"],
+    ["costo", "Semana"],
+  ],
+  mesero: [
+    ["mesas", "Mesas"],
+    ["reservas", "Reservas"],
+  ],
+  cocina: [["kcocina", "Cocina"]],
+  barra: [
+    ["kbarra", "Barra"],
+    ["caja", "Caja"],
+    ["mesas", "Mesas"],
+  ],
+};
+
+const ROLE_NAME: Record<Role, string> = { gerencia: "Gerencia", mesero: "Mesero", cocina: "Cocina", barra: "Barra y caja" };
+
 function Admin() {
-  const [tab, setTab] = useState<"reservas" | "pedidos" | "resenas" | "barra" | "cocina" | "insumos" | "costo">("reservas");
+  const [tab, setTab] = useState<Tab>("reservas");
+  const [role, setRole] = useState<Role | null>(null);
   const [open, setOpen] = useState<boolean | null>(null);
   const [key, setKey] = useState("");
   const [denied, setDenied] = useState<"" | "key" | "wait" | "config">("");
@@ -79,7 +113,18 @@ function Admin() {
   const [section, setSection] = useState<DrinkSection | "todas">("casa");
   const [book, setBook] = useState<"barra" | "cocina">("cocina");
 
-  async function loadCasa() {
+  async function loadCasa(as: Role | null = role) {
+    if (as && as !== "gerencia") {
+      // Floor roles: only reservations (mesero); their live screens load their own data.
+      if (as === "mesero") {
+        try {
+          setHolds(await listRequests());
+        } catch {
+          setHolds([]);
+        }
+      }
+      return;
+    }
     const menu = await publicMenu();
     replacePlateOverrides(menu.plates);
     replaceDrinkOverrides(menu.drinks);
@@ -129,7 +174,10 @@ function Admin() {
       .then((status) => {
         setOpen(status.open);
         setConfigured(status.configured);
-        if (status.open) return loadCasa();
+        const r = (status.role ?? null) as Role | null;
+        setRole(r);
+        if (r) setTab(ROLE_TABS[r][0][0]);
+        if (status.open) return loadCasa(r);
       })
       .catch(() => setOpen(false));
   }, []);
@@ -173,20 +221,12 @@ function Admin() {
       <div className="mx-auto max-w-5xl">
         <p className="text-xs tracking-[0.28em] text-brass uppercase">Casa</p>
         <p className="mt-3 max-w-xl text-sm text-muted">
-          Reservas, pedidos, precios y costos de la casa. La carta pública no muestra lo que cuesta.
+          {role && role !== "gerencia"
+            ? "Pantalla de servicio. Se actualiza sola cada pocos segundos."
+            : "Reservas, pedidos, precios y costos de la casa. La carta pública no muestra lo que cuesta."}
         </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {(
-            [
-              ["reservas", "Reservas"],
-              ["pedidos", "Pedidos"],
-              ["resenas", "Reseñas"],
-              ["cocina", "Platos"],
-              ["barra", "Tragos"],
-              ["insumos", "Insumos"],
-              ["costo", "Semana"],
-            ] as const
-          ).map(([id, label]) => (
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {(open && role ? ROLE_TABS[role] : []).map(([id, label]) => (
             <button
               key={id}
               type="button"
@@ -196,6 +236,18 @@ function Admin() {
               {label}
             </button>
           ))}
+          {open && role ? (
+            <span className="ml-auto flex items-center gap-2 text-xs text-muted">
+              {ROLE_NAME[role]}
+              <button
+                type="button"
+                onClick={() => void houseLeave().then(() => { setOpen(false); setRole(null); })}
+                className="min-h-11 border border-line px-3 text-muted"
+              >
+                Salir
+              </button>
+            </span>
+          ) : null}
         </div>
         {open === false ? (
           <form
@@ -207,13 +259,16 @@ function Admin() {
                   setDenied(result.open ? "" : (result.reason ?? "key"));
                   setOpen(result.open);
                   setKey("");
-                  if (result.open) void loadCasa();
+                  const r = (result.role ?? null) as Role | null;
+                  setRole(r);
+                  if (r) setTab(ROLE_TABS[r][0][0]);
+                  if (result.open) void loadCasa(r);
                 })
                 .catch(() => setDenied("key"));
             }}
           >
             <h1 className="font-display text-5xl">Casa</h1>
-            <p className="text-sm text-muted">La llave no es una cuenta de cliente. Quien no la tiene, no ve costos ni reservas.</p>
+            <p className="text-sm text-muted">Cada puesto tiene su llave: gerencia, mesero, cocina o barra. Solo gerencia ve costos.</p>
             <label className="grid gap-2 text-sm text-muted">
               Llave
               <input
@@ -476,6 +531,14 @@ function Admin() {
               </ul>
             )}
           </>
+        ) : tab === "mesas" ? (
+          <MesasDesk />
+        ) : tab === "kcocina" ? (
+          <StationDesk station="cocina" canSwitch={role === "cocina" || role === "gerencia"} />
+        ) : tab === "kbarra" ? (
+          <StationDesk station="barra" canSwitch={role === "barra" || role === "gerencia"} />
+        ) : tab === "caja" ? (
+          <CajaDesk />
         ) : tab === "resenas" ? (
           <ReputationDesk />
         ) : tab === "insumos" ? (
