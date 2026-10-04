@@ -246,6 +246,17 @@ export function Site() {
                   <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
                     {items.map((drink) => (
                       <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
+                        {drink.img && (
+                          <img
+                            src={drink.img}
+                            alt={lang === "es" ? drink.es : drink.en}
+                            loading="lazy"
+                            width={56}
+                            height={56}
+                            decoding="async"
+                            className="h-14 w-14 shrink-0 rounded-[10px] object-cover"
+                          />
+                        )}
                         <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
                         <span className="leader mb-1 min-w-6 flex-1" />
                         <span className="text-brass">{money(drink.price)}</span>
