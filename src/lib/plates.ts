@@ -1,4 +1,10 @@
-export type PlateSection = "entradas" | "mains" | "kids" | "sides";
+export type PlateSection =
+  | "tapitas"
+  | "entradas"
+  | "mains"
+  | "kids"
+  | "sides"
+  | "empacados";
 
 export type Plate = {
   id: string;
@@ -13,53 +19,83 @@ export type Plate = {
   available: boolean;
 };
 
-export const PLATE_SECTIONS: PlateSection[] = ["entradas", "mains", "kids", "sides"];
+export const PLATE_SECTIONS: PlateSection[] = [
+  "tapitas",
+  "entradas",
+  "mains",
+  "kids",
+  "sides",
+  "empacados",
+];
 
 export const plateLabel: Record<PlateSection, { es: string; en: string }> = {
+  tapitas: { es: "Tapitas", en: "Tapas" },
   entradas: { es: "Entradas", en: "Starters" },
   mains: { es: "Carnes, aves y pescados", en: "Mains" },
   kids: { es: "Menú kids", en: "Kids" },
   sides: { es: "Acompañamientos", en: "Sides" },
+  empacados: { es: "Empacados al vacío (para llevar)", en: "Vacuum-packed to go" },
 };
 
 /** Workbook assumption for restaurant food. Confirm with the accountant. */
 export const FOOD_ITBMS = 0.07;
 
 export const FOOD_TARGET: Record<PlateSection, number> = {
+  tapitas: 0.28,
   entradas: 0.28,
   mains: 0.35,
   kids: 0.35,
   sides: 0.25,
+  empacados: 0.25,
 };
 
 const CATALOG: Omit<Plate, "available">[] = [
-  { id: "chicharrones", es: "Chicharroncitos del burro", en: "Pork cracklings", section: "entradas", price: 13, cost: 0, portionEs: "0.6 lb de panza cruda y 3 oz de guacamole.", portionEn: "0.6 lb raw pork belly and 3 oz guacamole.", img: "/media/belly.webp" },
-  { id: "sliders", es: "Mini sliders Angus (3 unid)", en: "Angus sliders (3)", section: "entradas", price: 10, cost: 0, portionEs: "Tres de 2.7 oz de carne.", portionEn: "Three, 2.7 oz of beef each.", img: "/media/sliders.webp" },
-  { id: "nachos-carne", es: "Nachos de carne", en: "Beef nachos", section: "entradas", price: 15, cost: 0, portionEs: "Ocho tortillas, 5 oz de carne, queso, pico y guacamole.", portionEn: "Eight tortillas, 5 oz beef, cheese, pico and guacamole.", img: "/media/nachos-carne.webp" },
-  { id: "nachos-pollo", es: "Nachos de pollo", en: "Chicken nachos", section: "entradas", price: 15, cost: 0, portionEs: "Ocho tortillas, 5 oz de pollo, queso, pico y guacamole.", portionEn: "Eight tortillas, 5 oz chicken, cheese, pico and guacamole.", img: "/media/nachos-pollo.webp" },
-  { id: "salchichas", es: "Salchichas estilo alemán (2 unid)", en: "German sausages (2)", section: "entradas", price: 9.5, cost: 0, portionEs: "Dos salchichas y 2 oz de chucrut.", portionEn: "Two sausages and 2 oz sauerkraut.", img: "/media/salchichas.webp" },
-  { id: "aranitas", es: "Arañitas", en: "Plantain arañitas", section: "entradas", price: 10, cost: 0, portionEs: "Dos plátanos rallados.", portionEn: "Two grated plantains.", img: "/media/aranitas.webp" },
-  { id: "poppers", es: "Jalapeño poppers", en: "Jalapeño poppers", section: "entradas", price: 7, cost: 0, portionEs: "Seis unidades.", portionEn: "Six pieces.", img: "/media/poppers.webp" },
-  { id: "empanadas", es: "Empanada de maíz (4 unid)", en: "Corn empanadas (4)", section: "entradas", price: 7, cost: 0, portionEs: "Cuatro, con 1.5 oz de carne mechada cada una.", portionEn: "Four, 1.5 oz shredded beef each.", img: "/media/empanadas.webp" },
-  { id: "hummus", es: "Hummus", en: "Hummus", section: "entradas", price: 8, cost: 0, portionEs: "6 oz de hummus y dos tortillas.", portionEn: "6 oz hummus and two tortillas.", img: "/media/hummus.webp" },
-  { id: "wings", es: "Buffalo wings (8 unid)", en: "Buffalo wings (8)", section: "entradas", price: 8.5, cost: 0, portionEs: "Ocho alitas, cerca de 1.25 lb en crudo.", portionEn: "Eight wings, about 1.25 lb raw.", img: "/media/wings.webp" },
-  { id: "ceviche", es: "Ceviche de langostino", en: "Prawn ceviche", section: "entradas", price: 9.5, cost: 0, portionEs: "Cerca de 3 oz de langostino limpio.", portionEn: "About 3 oz cleaned prawn.", img: "/media/ceviche.webp" },
-  { id: "almejas", es: "Almejas borrachas", en: "Drunken clams", section: "entradas", price: 12.5, cost: 0, portionEs: "Una libra de almejas y 4 oz de salsa.", portionEn: "1 lb clams and 4 oz sauce.", img: "/media/almejas.webp" },
-  { id: "boneless", es: "Boneless de pollo", en: "Boneless wings", section: "entradas", price: 10.5, cost: 0, portionEs: "8 oz de pechuga.", portionEn: "8 oz breast.", img: "/media/boneless.webp" },
-  { id: "pollo", es: "Pollo al carbón", en: "Charcoal chicken", section: "mains", price: 13, cost: 0, portionEs: "Medio pollo, cerca de 1.6 lb, y un acompañamiento.", portionEn: "Half chicken, about 1.6 lb, and one side.", img: "/media/pollo.webp" },
-  { id: "burger", es: "Hamburguesa New York Dely", en: "New York Dely burger", section: "mains", price: 14, cost: 0, portionEs: "8 oz Angus y un acompañamiento.", portionEn: "8 oz Angus and one side.", img: "/media/burger.webp" },
-  { id: "picada", es: "Picada Argentina (2–3 personas)", en: "Argentine grill platter (2–3)", section: "mains", price: 35, cost: 0, portionEs: "12 oz de rib eye, 2 chorizos, 1 lb de pollo y un acompañamiento.", portionEn: "12 oz rib eye, 2 chorizos, 1 lb chicken and one side.", img: "/media/parrillada.webp" },
-  { id: "ribeye", es: "Rib-eye al carbón", en: "Charcoal rib eye", section: "mains", price: 25, cost: 0, portionEs: "12 oz y un acompañamiento.", portionEn: "12 oz and one side.", img: "/media/ribeye.webp" },
-  { id: "entrana", es: "Entraña al carbón", en: "Charcoal skirt steak", section: "mains", price: 28, cost: 0, portionEs: "10 oz y un acompañamiento.", portionEn: "10 oz and one side.", img: "/media/entrana.webp" },
-  { id: "salmon", es: "Salmón a la parrilla", en: "Grilled salmon", section: "mains", price: 17, cost: 0, portionEs: "8 oz y un acompañamiento.", portionEn: "8 oz and one side.", img: "/media/salmon.webp" },
-  { id: "kids-burger", es: "Mini hamburguesa Quinta Pata", en: "Kids burger", section: "kids", price: 6, cost: 0, portionEs: "4 oz de carne y un acompañamiento.", portionEn: "4 oz beef and one side.", img: "/media/kids-burger.webp" },
-  { id: "kids-boneless", es: "Boneless de pollo, kids", en: "Kids boneless", section: "kids", price: 6, cost: 0, portionEs: "5 oz de pechuga y un acompañamiento.", portionEn: "5 oz breast and one side.", img: "/media/kids-boneless.webp" },
-  { id: "kids-pasta", es: "Pasta marinera o al olio", en: "Kids pasta", section: "kids", price: 6, cost: 0, portionEs: "3 oz de pasta seca.", portionEn: "3 oz dry pasta.", img: "/media/kids-pasta.webp" },
+  // ── Tapitas ─────────────────────────────────────────────────
+  { id: "spicy-pork-belly-bites", es: "Spicy pork belly bites", en: "Spicy pork belly bites", section: "tapitas", price: 6, cost: 0, portionEs: "Daditos de panza de cerdo ahumados, servidos con salsa picante de BBQ y ajonjolí.", portionEn: "Smoked pork belly bites, served with spicy BBQ sauce and sesame.", img: null },
+
+  // ── Entradas ────────────────────────────────────────────────
+  { id: "chicharrones", es: "Chicharroncitos del Burro", en: "Burro pork cracklings", section: "entradas", price: 14, cost: 0, portionEs: "Panza de puerco sazonada con toque especial de la casa.", portionEn: "Pork belly seasoned with the house special touch.", img: "/media/belly.webp" },
+  { id: "sliders", es: "Mini Sliders Angus Burgers", en: "Angus burger sliders", section: "entradas", price: 12, cost: 0, portionEs: "3 unid. Carne Angus, cebolla caramelizada, pepinillos y salsa de la casa en pan brioche.", portionEn: "3 pc. Angus beef, caramelized onion, pickles and house sauce on brioche.", img: "/media/sliders.webp" },
+  { id: "nachos-carne", es: "Nachos de carne o pollo", en: "Beef or chicken nachos", section: "entradas", price: 15, cost: 0, portionEs: "Totopos, pico de gallo, guacamole, quesos y crema.", portionEn: "Tortilla chips, pico de gallo, guacamole, cheeses and cream.", img: "/media/nachos-carne.webp" },
+  { id: "chorizo-parrillero", es: "Chorizo parrillero", en: "Grilling chorizo", section: "entradas", price: 10, cost: 0, portionEs: "Servido con cebolla caramelizada y chimichurri.", portionEn: "Served with caramelized onion and chimichurri.", img: null },
+  { id: "aranitas", es: "Arañitas", en: "Plantain arañitas", section: "entradas", price: 11, cost: 0, portionEs: "Apanadas, con tártara casera.", portionEn: "Breaded, with house tartar.", img: "/media/aranitas.webp" },
+  { id: "poppers", es: "Jalapeño Poppers", en: "Jalapeño poppers", section: "entradas", price: 8, cost: 0, portionEs: "Jalapeño y queso apanados.", portionEn: "Breaded jalapeño and cheese.", img: "/media/poppers.webp" },
+  { id: "empanadas", es: "Empanadas de maíz", en: "Corn empanadas", section: "entradas", price: 7.5, cost: 0, portionEs: "Rellenas de carne mechada. Incluye 4 unid.", portionEn: "Stuffed with shredded beef. Includes 4 pc.", img: "/media/empanadas.webp" },
+  { id: "wings", es: "Buffalo Wings", en: "Buffalo wings", section: "entradas", price: 9.5, cost: 0, portionEs: "Alitas apanadas con salsa búfalo aparte.", portionEn: "Breaded wings with buffalo sauce on the side.", img: "/media/wings.webp" },
+  { id: "alitas-jerk", es: "Alitas estilo jerk jamaiquino", en: "Jamaican jerk wings", section: "entradas", price: 10.5, cost: 0, portionEs: "Alitas ahumadas, bien especiadas, con un toque picante.", portionEn: "Smoked, well-spiced wings with a spicy kick.", img: null },
+  { id: "coctel-camarones", es: "Cóctel de camarones", en: "Shrimp cocktail", section: "entradas", price: 8.5, cost: 0, portionEs: "Salsa de chili coreano y katsuobushi (bonito ahumado y curado).", portionEn: "Korean chili sauce and katsuobushi (smoked cured bonito).", img: null },
+  { id: "ceviche", es: "Ceviche de langostino", en: "Prawn ceviche", section: "entradas", price: 10, cost: 0, portionEs: "Un clásico panameño, con chips de plátano.", portionEn: "A Panamanian classic, with plantain chips.", img: "/media/ceviche.webp" },
+  { id: "boneless", es: "Boneless de pollo", en: "Chicken boneless", section: "entradas", price: 11, cost: 0, portionEs: "Apanados, con salsa BBQ.", portionEn: "Breaded, with BBQ sauce.", img: "/media/boneless.webp" },
+
+  // ── Carnes / Aves / Pescados ────────────────────────────────
+  { id: "pollo", es: "Pollo al carbón", en: "Charcoal chicken", section: "mains", price: 13, cost: 0, portionEs: "Media porción de pollo, más 1 acompañamiento.", portionEn: "Half chicken, plus 1 side.", img: "/media/pollo.webp" },
+  { id: "burger", es: "Hamburguesa clásica steakhouse", en: "Classic steakhouse burger", section: "mains", price: 15, cost: 0, portionEs: "Carne Angus, cebolla caramelizada, bacon, lechuga, tomate, salsa steakhouse y pan brioche.", portionEn: "Angus beef, caramelized onion, bacon, lettuce, tomato, steakhouse sauce and brioche.", img: "/media/burger.webp" },
+  { id: "picada", es: "Picada argentina", en: "Argentine grill platter", section: "mains", price: 35, cost: 0, portionEs: "N.Y., chorizo, pollo a la brasa y 1 acompañamiento (2 a 3 personas).", portionEn: "N.Y., chorizo, charcoal chicken and 1 side (serves 2–3).", img: "/media/parrillada.webp" },
+  { id: "ribeye", es: "Rib-eye al carbón (nacional, libre de hormonas)", en: "Charcoal rib eye (hormone-free, national)", section: "mains", price: 25, cost: 0, portionEs: "Incluye 1 acompañamiento y chimichurri.", portionEn: "Includes 1 side and chimichurri.", img: "/media/ribeye.webp" },
+  { id: "ribeye-angus", es: "Rib-eye al carbón (Angus importado)", en: "Charcoal rib eye (imported Angus)", section: "mains", price: 35, cost: 0, portionEs: "Incluye 1 acompañamiento y chimichurri.", portionEn: "Includes 1 side and chimichurri.", img: null },
+  { id: "filete-albahaca", es: "Filete en salsa de albahaca y hongos (8 oz)", en: "Filet in herb mushroom sauce (8 oz)", section: "mains", price: 15, cost: 0, portionEs: "Cremosa salsa de hongos con albahaca y vino tinto. Incluye 1 acompañamiento.", portionEn: "Creamy mushroom sauce with basil and red wine. Includes 1 side.", img: null },
+  { id: "ny-strip", es: "N.Y. strip al carbón (USDA Choice importado)", en: "Charcoal N.Y. strip (imported USDA Choice)", section: "mains", price: 28, cost: 0, portionEs: "Incluye 1 acompañamiento y chimichurri.", portionEn: "Includes 1 side and chimichurri.", img: null },
+  { id: "pulpo-caribe", es: "Pulpo caribe", en: "Caribbean octopus", section: "mains", price: 18, cost: 0, portionEs: "En leche de coco y curry, con patacones.", portionEn: "In coconut milk and curry, with patacones.", img: null },
+  { id: "salmon", es: "Salmón a la parrilla", en: "Grilled salmon", section: "mains", price: 17, cost: 0, portionEs: "Incluye 1 acompañamiento.", portionEn: "Includes 1 side.", img: "/media/salmon.webp" },
+
+  // ── Menú kids ───────────────────────────────────────────────
+  { id: "kids-burger", es: "Mini hamburguesa Quinta Pata", en: "Quinta Pata mini burger", section: "kids", price: 6, cost: 0, portionEs: "1 unid. Incluye 1 acompañamiento.", portionEn: "1 pc. Includes 1 side.", img: "/media/kids-burger.webp" },
+  { id: "kids-boneless", es: "Boneless de pollo (kids)", en: "Kids boneless", section: "kids", price: 6, cost: 0, portionEs: "Incluye 1 acompañamiento.", portionEn: "Includes 1 side.", img: "/media/kids-boneless.webp" },
+
+  // ── Acompañamientos ─────────────────────────────────────────
   { id: "papas", es: "Papitas fritas", en: "French fries", section: "sides", price: 3.5, cost: 0, portionEs: "6 oz.", portionEn: "6 oz.", img: "/media/papas.webp" },
   { id: "patacon", es: "Patacón pisao", en: "Patacones", section: "sides", price: 3.5, cost: 0, portionEs: "Plátano y medio, cerca de seis patacones.", portionEn: "One and a half plantains, about six pieces.", img: "/media/patacon.webp" },
   { id: "yuca", es: "Yuca frita", en: "Fried cassava", section: "sides", price: 3.5, cost: 0, portionEs: "6 oz servidos.", portionEn: "6 oz served.", img: "/media/yuca.webp" },
-  { id: "vegetales", es: "Vegetales salteados", en: "Sautéed vegetables", section: "sides", price: 4.5, cost: 0, portionEs: "6 oz.", portionEn: "6 oz.", img: "/media/vegetales.webp" },
+  { id: "guacamole", es: "Guacamole", en: "Guacamole", section: "sides", price: 3.5, cost: 0, portionEs: "6 oz.", portionEn: "6 oz.", img: null },
+  { id: "vegetales", es: "Vegetales al grill en mantequilla negra", en: "Grilled vegetables in black butter", section: "sides", price: 4.5, cost: 0, portionEs: "6 oz.", portionEn: "6 oz.", img: "/media/vegetales.webp" },
   { id: "totopos", es: "Totopos", en: "Tortilla chips", section: "sides", price: 3.5, cost: 0, portionEs: "Cinco tortillas.", portionEn: "Five tortillas.", img: "/media/totopos.webp" },
+
+  // ── Empacados al vacío (para llevar) ─────────────────────────
+  { id: "costillas-bbq-kc", es: "Costillas BBQ estilo Kansas City", en: "Kansas City BBQ ribs", section: "empacados", price: 8, cost: 0, portionEs: "15 horas de cocción, ahumadas en nance.", portionEn: "15-hour cook, smoked over nance wood.", img: null },
+  { id: "alitas-jerk-vacio", es: "Alitas estilo jerk jamaiquino", en: "Jamaican jerk wings", section: "empacados", price: 10.5, cost: 0, portionEs: "Alitas ahumadas, bien especiadas, con un toque picante.", portionEn: "Smoked, well-spiced wings with a spicy kick.", img: null },
+  { id: "pulpo-caribe-vacio", es: "Pulpo caribe", en: "Caribbean octopus", section: "empacados", price: 17, cost: 0, portionEs: "En leche de coco y curry.", portionEn: "In coconut milk and curry.", img: null },
+  { id: "filete-albahaca-vacio", es: "Filete en salsa de albahaca y hongos (8 oz)", en: "Filet in herb mushroom sauce (8 oz)", section: "empacados", price: 14, cost: 0, portionEs: "Cremosa salsa de hongos con albahaca y vino tinto.", portionEn: "Creamy mushroom sauce with basil and red wine.", img: null },
+  { id: "vegetales-grill-vacio", es: "Vegetales al grill en mantequilla negra", en: "Grilled vegetables in black butter", section: "empacados", price: 4.5, cost: 0, portionEs: "6 oz.", portionEn: "6 oz.", img: "/media/vegetales.webp" },
 ];
 
 type Override = { price?: number; available?: boolean };

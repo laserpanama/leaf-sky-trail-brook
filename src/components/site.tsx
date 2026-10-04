@@ -202,7 +202,7 @@ export function Site() {
             <p className="mt-6 max-w-md text-sm text-muted">{t.cartaNote}</p>
           </div>
           {PLATE_SECTIONS.map((section) => {
-            const items = plates.filter((plate) => plate.section === section && plate.available && plate.img);
+            const items = plates.filter((plate) => plate.section === section && plate.available);
             if (!items.length) return null;
             return (
               <div key={section} className="mx-auto mt-20 max-w-6xl px-5">
@@ -547,15 +547,27 @@ function PlateStill({
   return (
     <article className={lead ? "md:col-span-2" : ""}>
       <figure className={`frame relative ${lead ? "h-[70vh] min-h-96" : "h-80"}`}>
-        <img
-          src={plate.img ?? ""}
-          alt={name}
-          width={lead ? 1400 : 900}
-          height={lead ? 900 : 640}
-          loading={lead ? "eager" : "lazy"}
-          decoding="async"
-          className="h-full w-full object-cover"
-        />
+        {plate.img ? (
+          <img
+            src={plate.img}
+            alt={name}
+            width={lead ? 1400 : 900}
+            height={lead ? 900 : 640}
+            loading={lead ? "eager" : "lazy"}
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center" style={{ background: "#e0d5c3" }}>
+            <svg viewBox="0 0 32 32" width={lead ? 220 : 140} height={lead ? 220 : 140} aria-hidden="true" style={{ opacity: 0.14 }}>
+              <path
+                fill="#6b3a0f"
+                d="M9 7h14.2v3.2H12.6v3.3h6.2c3.5 0 5.7 2 5.7 5 0 3.4-2.8 5.9-6.8 5.9-3.3 0-5.7-1.6-6.6-4.3l2.9-1.1c.5 1.5 1.8 2.4 3.6 2.4 2.2 0 3.6-1.3 3.6-3 0-1.7-1.3-2.8-3.6-2.8H9V7z"
+              />
+              <rect x="9" y="25.2" width="7.2" height="2" fill="#6b3a0f" />
+            </svg>
+          </div>
+        )}
         <div className="still-fade absolute inset-0" />
         <figcaption className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 px-5 py-5">
           <div>
