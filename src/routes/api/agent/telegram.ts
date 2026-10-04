@@ -40,6 +40,20 @@ export const Route = createFileRoute("/api/agent/telegram")({
             return ok();
           }
           const [action, id] = (cb.data ?? "").split(":");
+          // Reputation module buttons: publish / hide / AI draft / handled.
+          if (action?.startsWith("rv-") && id) {
+            const { handleStaffButton } = await import("@/lib/reviews.server");
+            const result = await handleStaffButton(action, id);
+            const who = cb.from?.first_name ?? "staff";
+            await tg.answerCallback(cb.id, result.toast);
+            if (result.reply && cb.message) {
+              await tg.sendMessage(cb.message.chat.id, result.reply);
+            } else if (cb.message && action === "rv-done") {
+              // Only closing the alert removes the buttons; publish/hide keep the AI-draft button usable.
+              await tg.editMessage(cb.message.chat.id, cb.message.message_id, `${result.toast} · ${who}\n${cb.message.text ?? ""}`);
+            }
+            return ok();
+          }
           if ((action !== "ok" && action !== "no") || !id) return ok();
           const { setStatusById } = await import("@/lib/agent/booking.server");
           const row = await setStatusById(id, action === "ok" ? "confirmada" : "no");

@@ -16,6 +16,7 @@ import {
 import { Costeo } from "@/components/costeo";
 import { KitchenWeek, PlateDesk } from "@/components/cocina";
 import { Insumos } from "@/components/insumos";
+import { ReputationDesk } from "@/components/reputacion";
 import { listPlates, replaceKitchenWeeks, replacePlateOverrides, type Plate } from "@/lib/plates";
 import { panamaMonday, replacePour, shiftWeek } from "@/lib/pour";
 import { replaceWebSales } from "@/lib/web-sales";
@@ -50,7 +51,7 @@ function holdKey(hold: { date: string; time: string }) {
 }
 
 function Admin() {
-  const [tab, setTab] = useState<"reservas" | "pedidos" | "barra" | "cocina" | "insumos" | "costo">("reservas");
+  const [tab, setTab] = useState<"reservas" | "pedidos" | "resenas" | "barra" | "cocina" | "insumos" | "costo">("reservas");
   const [open, setOpen] = useState<boolean | null>(null);
   const [key, setKey] = useState("");
   const [denied, setDenied] = useState<"" | "key" | "wait" | "config">("");
@@ -179,6 +180,7 @@ function Admin() {
             [
               ["reservas", "Reservas"],
               ["pedidos", "Pedidos"],
+              ["resenas", "Reseñas"],
               ["cocina", "Platos"],
               ["barra", "Tragos"],
               ["insumos", "Insumos"],
@@ -474,6 +476,8 @@ function Admin() {
               </ul>
             )}
           </>
+        ) : tab === "resenas" ? (
+          <ReputationDesk />
         ) : tab === "insumos" ? (
           <Insumos onChange={() => void loadCasa()} />
         ) : tab === "cocina" ? (

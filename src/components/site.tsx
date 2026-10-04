@@ -9,6 +9,7 @@ import { placeHold, publicMenu } from "@/lib/casa";
 import { addToCart, cartLines, hydrateCart, type CartLine } from "@/lib/cart";
 import { CartDrawer } from "@/components/cart-drawer";
 import { AgentChat } from "@/components/agent-chat";
+import { ReviewsSection } from "@/components/reviews-section";
 import { SLOT_TIMES } from "@/lib/slots";
 import { listDrinks, DRINK_SECTIONS, replaceDrinkOverrides, sectionLabel, money, type Drink } from "@/lib/drinks";
 import { listPlates, PLATE_SECTIONS, plateLabel, replacePlateOverrides, type Plate } from "@/lib/plates";
@@ -476,6 +477,8 @@ export function Site() {
             </p>
           ))}
         </section>
+
+        <ReviewsSection lang={lang} />
 
         <section id="visita" className="scroll-mt-20 border-t border-line">
           <div className="mx-auto grid max-w-6xl gap-8 px-5 py-20 md:grid-cols-2">
