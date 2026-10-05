@@ -16,7 +16,7 @@ const venue: Venue = {
     title: "Cervecería Tres Gatos — Taproom en Ciudad de Panamá",
     description:
       "Cervezas artesanales de la casa en barril, comida, parking y pet friendly. Taproom en Calle Augusto Samuel Boyd, Ciudad de Panamá. Reservas por WhatsApp.",
-    siteUrl: "https://demo-3gatos.pipolopez.pro",
+    siteUrl: "https://demo-tresgatos.pipolopez.pro",
     favicon: { href: "/favicon.png", type: "image/png" },
   },
   logo: "/logo-round.png",
