@@ -1,33 +1,62 @@
 #!/usr/bin/env bash
-# Deploy one venue of the restaurant template on the VPS (same recipe as lqp-deploy).
-#   venue-deploy <slug> [branch]      e.g.  venue-deploy tresgatos
-# First run asks for domain, SSL email and the /admin password; later runs reuse
-# /etc/<slug>.env and only pull + build + restart. Each venue gets its own folder,
-# Postgres database, PM2 process and port (first free from 3120).
+# One deploy command for every restaurant site on the VPS.
+#   venue-deploy <slug>            redeploy the version pinned in /etc/<slug>.env
+#   venue-deploy <slug> <ref>      pin a new version (tag like v1.3, or a branch) and deploy it
+#   venue-deploy status            list every site: domain, pinned version, port, PM2 state
+# Each site has its own folder, database, env file, PM2 process, port and domain. The
+# version is pinned per site, so merging new code changes no live site until you move
+# that site to it on purpose. First run asks for domain, SSL email and /admin password.
 set -euo pipefail
-SLUG=${1:-}; BRANCH=${2:-}
-[[ "$SLUG" =~ ^[a-z0-9-]+$ ]] || { echo "Uso: venue-deploy <slug> [rama]"; exit 1; }
-[ "$SLUG" = laquintapata ] && { echo "La Quinta Pata se publica con lqp-deploy"; exit 1; }
-APP=$SLUG; DIR=/var/www/$APP; ENVF=/etc/$APP.env; EXTRA=/etc/$APP.extra.env
-REPO=https://github.com/laserpanama/leaf-sky-trail-brook.git
-DB=$(echo "$APP" | tr '-' '_')
+REPO=${REPO_URL:-https://github.com/laserpanama/leaf-sky-trail-brook.git}
 [ "$(id -u)" = 0 ] || { echo "Ejecuta como root"; exit 1; }
+
+if [ "${1:-}" = status ]; then
+  printf "%-16s %-36s %-14s %-6s %s\n" SITIO DOMINIO VERSIÓN PUERTO PM2
+  for f in /etc/*.env; do
+    s=$(basename "$f" .env); [ -d "/var/www/$s/.git" ] || continue
+    v() { grep -m1 "^$1=" "$f" | cut -d= -f2- | tr -d "'"; }
+    st=$(pm2 jlist 2>/dev/null | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const p=JSON.parse(d||"[]").find(x=>x.name===process.argv[1]);console.log(p?p.pm2_env.status:"-")})' "$s")
+    printf "%-16s %-36s %-14s %-6s %s\n" "$s" "$(v DOMAIN)" "$(v GIT_REF || true)" "$(v PORT)" "$st"
+  done
+  exit 0
+fi
+
+SLUG=${1:-}; NEW_REF=${2:-}
+[[ "$SLUG" =~ ^[a-z0-9-]+$ ]] || { echo "Uso: venue-deploy <slug> [versión]  ·  venue-deploy status"; exit 1; }
+APP=$SLUG; DIR=/var/www/$APP; ENVF=/etc/$APP.env; EXTRA=/etc/$APP.extra.env
+DB=$(echo "$APP" | tr '-' '_')
 [ -f "$ENVF" ] && { set -a; . "$ENVF"; set +a; }
-BRANCH=${BRANCH:-${GIT_BRANCH:-main}}
-if [ -z "${DOMAIN:-}" ]; then read -rp "Dominio [demo-$APP.pipolopez.pro]: " DOMAIN; DOMAIN=${DOMAIN:-demo-$APP.pipolopez.pro}; fi
+REF=${NEW_REF:-${GIT_REF:-main}}
+# 1. Code at the pinned version (tag or branch). Nothing else on the VPS changes yet.
+FRESH=0; [ -d "$DIR/.git" ] || { git clone -q "$REPO" "$DIR"; FRESH=1; }
+git -C "$DIR" fetch -q --tags --force origin
+if git -C "$DIR" rev-parse -q --verify "refs/tags/$REF^{commit}" >/dev/null; then
+  git -C "$DIR" checkout -q --force --detach "refs/tags/$REF"
+else
+  git -C "$DIR" fetch -q origin "$REF" 2>/dev/null || { echo "No existe la versión ni la rama '$REF'"; [ "$FRESH" = 1 ] && rm -rf "$DIR"; exit 1; }
+  git -C "$DIR" checkout -q --force -B "$REF" FETCH_HEAD
+fi
+cd "$DIR"
+[ -f "src/venues/$APP/index.ts" ] || { echo "La versión '$REF' no tiene src/venues/$APP"; cd /; [ "$FRESH" = 1 ] && rm -rf "$DIR"; exit 1; }
+
+# 2. Settings: asked once, then reused from the env file.
+[ "$APP" = laquintapata ] && DEFAULT_DOMAIN=laquintapata.pipolopez.pro || DEFAULT_DOMAIN=demo-$APP.pipolopez.pro
+if [ -z "${DOMAIN:-}" ]; then read -rp "Dominio [$DEFAULT_DOMAIN]: " DOMAIN; DOMAIN=${DOMAIN:-$DEFAULT_DOMAIN}; fi
 if [ -z "${CERT_EMAIL:-}" ]; then read -rp "Email para SSL (Let's Encrypt): " CERT_EMAIL; fi
 if [ -z "${CASA_PASSWORD:-}" ]; then while :; do read -rsp "Clave del panel /admin (mín. 10, sin comillas simples): " CASA_PASSWORD; echo; [ ${#CASA_PASSWORD} -ge 10 ] && [[ "$CASA_PASSWORD" != *"'"* ]] && break; echo "Clave inválida"; done; fi
 if [ -z "${PORT:-}" ]; then PORT=3120; while ss -ltn | grep -q ":$PORT " || grep -qs "^PORT='$PORT'" /etc/*.env; do PORT=$((PORT+1)); done; fi
 CASA_SECRET=${CASA_SECRET:-$(openssl rand -hex 32)}; DB_PASS=${DB_PASS:-$(openssl rand -hex 24)}
 command -v node >/dev/null || { echo "Falta Node.js"; exit 1; }
 command -v pm2 >/dev/null || npm i -g pm2 --silent
+
+# 3. Database and env file (secrets reused on every run).
 PSQL="runuser -u postgres -- psql -v ON_ERROR_STOP=1 -qtAc"
 [ "$($PSQL "SELECT 1 FROM pg_roles WHERE rolname='$DB'")" = 1 ] || $PSQL "CREATE ROLE $DB LOGIN"
 $PSQL "ALTER ROLE $DB PASSWORD '$DB_PASS'"
 [ "$($PSQL "SELECT 1 FROM pg_database WHERE datname='$DB'")" = 1 ] || runuser -u postgres -- createdb -O "$DB" "$DB"
 umask 077; cat > "$ENVF" << EOF
 VENUE='$APP'
-GIT_BRANCH='$BRANCH'
+GIT_REF='$REF'
 DOMAIN='$DOMAIN'
 PUBLIC_SITE_URL='https://$DOMAIN'
 CERT_EMAIL='$CERT_EMAIL'
@@ -42,17 +71,19 @@ CASA_SECRET='$CASA_SECRET'
 EOF
 [ -f "$EXTRA" ] && cat "$EXTRA" >> "$ENVF"
 umask 022
-if [ -d "$DIR/.git" ]; then git -C "$DIR" fetch -q origin "$BRANCH" && git -C "$DIR" checkout -q -B "$BRANCH" "origin/$BRANCH" && git -C "$DIR" reset -q --hard "origin/$BRANCH"; else git clone -q -b "$BRANCH" "$REPO" "$DIR"; fi
-cd "$DIR"
-[ -f "src/venues/$APP/index.ts" ] || { echo "No existe src/venues/$APP en la rama $BRANCH"; exit 1; }
+
+# 4. Build this venue and check the stamp before touching the running site.
 sed -i 's/preset: "vercel"/preset: "node-server"/' vite.config.ts
 grep -q 'preset: "node-server"' vite.config.ts || { echo "No pude cambiar el preset de Nitro"; exit 1; }
 NODE_ENV=development npm install --include=dev --no-audit --no-fund --loglevel=error
 set -a; . "$ENVF"; set +a
 npm run build
+[ "$(cat .output/public/venue.txt 2>/dev/null)" = "$APP" ] || { echo "✖ La compilación no es de $APP; el sitio publicado no se tocó"; exit 1; }
+
+# 5. Swap the process, Nginx and SSL.
 pm2 delete "$APP" >/dev/null 2>&1 || true
 pm2 start "$DIR/.output/server/index.mjs" --name "$APP" --node-args="--env-file=$ENVF" --time
-pm2 save >/dev/null
+pm2 save >/dev/null; pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 cat > /etc/nginx/sites-available/$APP << EOF
 server {
   listen 80;
@@ -82,6 +113,10 @@ if [ -n "$DNS" ] && [ "$DNS" = "$IP" ]; then
 else
   echo "⚠ $DOMAIN apunta a '${DNS:-nada}', no a $IP. Crea el registro A y vuelve a correr: venue-deploy $APP (sin HTTPS el /admin no deja iniciar sesión)"
 fi
+
+# 6. The running site must answer as this venue.
 sleep 3
 curl -fsS -o /dev/null -w "App local: HTTP %{http_code}\n" "http://127.0.0.1:$PORT/" || { pm2 logs "$APP" --lines 40 --nostream; exit 1; }
-echo "✔ Listo → https://$DOMAIN  ·  Panel → https://$DOMAIN/admin  ·  Actualizar → venue-deploy $APP"
+[ "$(curl -fsS "http://127.0.0.1:$PORT/venue.txt")" = "$APP" ] || { echo "✖ El puerto $PORT no está sirviendo $APP"; exit 1; }
+install -m 755 "$DIR/scripts/venue-deploy.sh" /usr/local/bin/venue-deploy
+echo "✔ $APP en $(git -C "$DIR" describe --tags --always) → https://$DOMAIN  ·  Panel → https://$DOMAIN/admin"

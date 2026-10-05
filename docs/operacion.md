@@ -2,6 +2,8 @@
 
 Todo se corre como root en el VPS, un comando por tarea. `lqp-deploy` regenera `/etc/laquintapata.env`, le agrega `/etc/laquintapata.extra.env`, compila, aplica migraciones y reinicia PM2 (puerto 3120, detrás de Nginx). Ningún comando de aquí imprime valores de llaves.
 
+> Desde el template de restaurantes, todos los sitios (incluida La Quinta Pata) se pueden publicar con `venue-deploy <slug> [versión]`, con la versión fijada por sitio. Ver `docs/venues.md`.
+
 ## Publicar cambios de `main`
 
 ```bash

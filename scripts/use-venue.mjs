@@ -4,7 +4,7 @@
  * ./public and src/venues/<slug>/site.json to src/lib/og/site.json (both are
  * generated, gitignored). VENUE defaults to laquintapata.
  */
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +19,8 @@ export function stageVenue(slug = venueSlug()) {
   }
   rmSync(join(root, "public"), { recursive: true, force: true });
   cpSync(join(dir, "public"), join(root, "public"), { recursive: true });
+  // Build stamp: venue-deploy checks it before swapping the running site.
+  writeFileSync(join(root, "public", "venue.txt"), `${slug}\n`);
   mkdirSync(join(root, "src/lib/og"), { recursive: true });
   cpSync(join(dir, "site.json"), join(root, "src/lib/og/site.json"));
   return slug;
