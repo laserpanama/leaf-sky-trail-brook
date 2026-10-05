@@ -30,11 +30,19 @@ La de gerencia (`CASA_PASSWORD`) se cambia con el comando de llaves.
 
 ## Respaldo diario de la base
 
+Ya existe en el VPS: cada día a las 03:30 (hora del servidor) queda `/var/backups/laquintapata/lqp-AAAA-MM-DD.dump`, en formato de `pg_dump -Fc`. Antes de cambios grandes se guardan copias con prefijo (`pre-entrega-…`, `pre-pedidos-…`). Para ver de dónde sale el job:
+
 ```bash
-bash /var/www/laquintapata/scripts/backup-setup.sh
+crontab -l 2>/dev/null | grep -i lqp; grep -ril laquintapata /etc/cron.d /etc/cron.daily 2>/dev/null
 ```
 
-Guarda 14 días en `/var/backups/laquintapata`. Copiar esa carpeta fuera del VPS una vez por semana. Restaurar siempre primero en una base aparte, nunca encima de la de producción.
+Comprobar que el último respaldo se puede leer (no toca la base):
+
+```bash
+F=$(ls -t /var/backups/laquintapata/lqp-*.dump | head -1) && echo "$F" && pg_restore --list "$F" | grep -cE "TABLE DATA"
+```
+
+Falta copiarlo fuera del VPS una vez por semana: un respaldo en el mismo servidor no sirve si se pierde el servidor. Restaurar siempre primero en una base aparte, nunca encima de la de producción.
 
 ## Volver a una versión anterior
 
