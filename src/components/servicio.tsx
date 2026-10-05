@@ -229,7 +229,10 @@ export function MesasDesk() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <div>
+        <div id="carta-mesero" className="scroll-mt-4">
+          <p className="mb-3 text-sm text-muted">
+            Toca un producto para sumarlo a la comanda. Cada toque agrega uno.
+          </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={kind === "drink" ? btnOn : btn} onClick={() => { setKind("drink"); setSection(""); }}>
               Tragos
@@ -258,7 +261,16 @@ export function MesasDesk() {
             </div>
           ) : null}
           {menu.data === null ? (
-            <p className="mt-6 text-sm text-muted">{menu.error ? "No se pudo cargar la carta." : "Cargando carta…"}</p>
+            menu.error ? (
+              <div className="mt-6 grid gap-2 text-sm">
+                <p className="text-brass">No se pudo cargar la carta. Revisa la conexión.</p>
+                <button type="button" className={btn} onClick={menu.refresh}>
+                  Reintentar
+                </button>
+              </div>
+            ) : (
+              <p className="mt-6 text-sm text-muted">Cargando carta…</p>
+            )
           ) : (
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
               {shown.map((item) => {
@@ -290,7 +302,16 @@ export function MesasDesk() {
           <h2 className="font-display text-3xl">Comanda</h2>
           <p className="mt-1 text-sm text-muted">{(service === "llevar" ? table || "Para llevar" : table) || "Sin mesa"}</p>
           {cart.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">Toca la carta para agregar.</p>
+            <div className="mt-4 grid gap-3 text-sm text-muted">
+              <ol className="grid gap-1">
+                <li className={(service === "llevar" || table) ? "text-fg" : ""}>1. Elige la mesa {table || service === "llevar" ? "✓" : ""}</li>
+                <li>2. Toca los platos o tragos de la carta</li>
+                <li>3. Envía a cocina y barra</li>
+              </ol>
+              <a href="#carta-mesero" className={`${btn} inline-flex items-center justify-center lg:hidden`}>
+                ↑ Ir a la carta
+              </a>
+            </div>
           ) : (
             <ul className="mt-4 divide-y divide-line border-y border-line">
               {cart.map((line) => (
@@ -331,7 +352,13 @@ export function MesasDesk() {
             <span className="font-display text-2xl">{money(total)}</span>
           </div>
           <button type="button" disabled={!cart.length || state === "sending"} onClick={send} className="mt-3 min-h-12 w-full bg-brass text-ink disabled:opacity-50">
-            {state === "sending" ? "Enviando…" : "Enviar a cocina y barra"}
+            {state === "sending"
+              ? "Enviando…"
+              : !table.trim() && service === "mesa"
+                ? "Elige la mesa"
+                : !cart.length
+                  ? "Agrega productos"
+                  : "Enviar a cocina y barra"}
           </button>
           {message ? <p className={`mt-2 text-sm ${state === "sent" ? "text-fg" : "text-brass"}`}>{message}</p> : null}
         </aside>
