@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { placeOrder } from "@/lib/casa";
 import { clearCart, setCartQty, type CartLine } from "@/lib/cart";
 import { copy, WA_NUMBER, type Lang } from "@/lib/copy";
+import { venue } from "@/venue";
+
+const YAPPY = venue.contact.yappy;
+const YAPPY_SHOWN = YAPPY ? `${YAPPY.slice(0, 4)}-${YAPPY.slice(4)}` : "";
 import { drinkItbms, money, type Drink } from "@/lib/drinks";
 import { FOOD_ITBMS, type Plate } from "@/lib/plates";
 
@@ -102,13 +106,13 @@ export function CartDrawer({
       return;
     }
     setPhoneBad(false);
-    const head = lang === "es" ? "Hola, quiero pedir en La Quinta Pata." : "Hi, I'd like to order at La Quinta Pata.";
+    const head = venue.messages.order[lang];
     const where = service === "mesa" ? t.cartMesa : t.cartGo;
     const payLine =
       pay === "yappy"
         ? lang === "es"
-          ? `Pago: Yappy al 6494-6886. Monto ${money(round2(total))}.${phone ? ` Mi Yappy: ${phone}.` : ""}`
-          : `Payment: Yappy to 6494-6886. Amount ${money(round2(total))}.${phone ? ` My Yappy: ${phone}.` : ""}`
+          ? `Pago: Yappy al ${YAPPY_SHOWN}. Monto ${money(round2(total))}.${phone ? ` Mi Yappy: ${phone}.` : ""}`
+          : `Payment: Yappy to ${YAPPY_SHOWN}. Amount ${money(round2(total))}.${phone ? ` My Yappy: ${phone}.` : ""}`
         : pay === "tarjeta"
           ? lang === "es"
             ? "Pago: Visa o Mastercard en el datáfono."
@@ -151,14 +155,14 @@ export function CartDrawer({
       <button type="button" aria-label={lang === "es" ? "Cerrar pedido" : "Close order"} className="absolute inset-0 bg-bg/70" onClick={close} />
       <aside className="relative flex h-full w-full max-w-md flex-col border-l border-line bg-bg">
         <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
-          <h2 className="font-display text-4xl italic">{t.cartTitle}</h2>
+          <h2 className="font-display text-4xl display-i">{t.cartTitle}</h2>
           <button type="button" onClick={close} className="min-h-11 border border-line px-4 text-sm text-muted">
             {lang === "es" ? "Cerrar" : "Close"}
           </button>
         </div>
         {sent ? (
           <div className="px-5 py-10">
-            <p className="font-display text-4xl italic">{t.cartSent}</p>
+            <p className="font-display text-4xl display-i">{t.cartSent}</p>
             <p className="mt-4 text-sm text-muted">
               {sent === "yappy" ? t.sentYappy : sent === "tarjeta" ? t.sentCard : t.sentCash}
             </p>
@@ -223,14 +227,16 @@ export function CartDrawer({
                 ))}
               </div>
               <p className="mt-4 text-xs tracking-[0.28em] text-brass uppercase">{t.payHow}</p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
+              <div className={`mt-2 grid gap-2 ${YAPPY ? "grid-cols-3" : "grid-cols-2"}`}>
                 {(
                   [
                     ["yappy", t.payYappy],
                     ["tarjeta", t.payCard],
                     ["efectivo", t.payCash],
                   ] as const
-                ).map(([mode, label]) => (
+                )
+                  .filter(([mode]) => mode !== "yappy" || Boolean(YAPPY))
+                  .map(([mode, label]) => (
                   <button
                     key={mode}
                     type="button"
@@ -250,7 +256,7 @@ export function CartDrawer({
                   <button
                     type="button"
                     onClick={() => {
-                      void navigator.clipboard?.writeText("64946886").then(() => {
+                      void navigator.clipboard?.writeText(YAPPY ?? "").then(() => {
                         setCopied(true);
                         window.setTimeout(() => setCopied(false), 1600);
                       });

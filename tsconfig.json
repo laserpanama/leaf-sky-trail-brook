@@ -25,6 +25,10 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      // Typecheck default. Every venue file is still checked via `satisfies Venue`.
+      "@venue": [
+        "./src/venues/laquintapata"
       ]
     },
     "allowImportingTsExtensions": true

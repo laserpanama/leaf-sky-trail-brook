@@ -13,6 +13,11 @@
   --radius: 0.25rem;
 }
 
+/* Display headings follow the venue: italic for a serif, upright for a condensed sans. */
+.display-i {
+  font-style: var(--display-style, italic);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

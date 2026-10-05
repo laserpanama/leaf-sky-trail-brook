@@ -1,5 +1,4 @@
-import { book as barra } from "./barra";
-import { book as cocina } from "./cocina";
+import { venue } from "@/venue";
 
 export type Supply = {
   id: string;
@@ -29,7 +28,7 @@ export type Book = {
 
 export type BookId = "cocina" | "barra";
 
-const BOOKS: Record<BookId, Book> = { cocina, barra };
+const BOOKS: Record<BookId, Book> = venue.books;
 
 const KEY = "lqp-supplies";
 

@@ -168,7 +168,7 @@ export function Insumos({ onChange }: { onChange: () => void }) {
         })}
       </ul>
       <details className="mt-10">
-        <summary className="cursor-pointer font-display text-3xl italic">Preparaciones y lotes</summary>
+        <summary className="cursor-pointer font-display text-3xl display-i">Preparaciones y lotes</summary>
         <p className="mt-3 max-w-xl text-sm text-muted">
           Lo que no se compra ya medido: guacamole, chimichurri, jarabes. El costo por unidad es el del archivo. Si cambia una cantidad, pese la tanda.
         </p>

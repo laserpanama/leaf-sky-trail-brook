@@ -2,7 +2,7 @@ import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto
 import { deleteCookie, getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
 import { env } from "@/lib/env.server";
-import { SLOT_TIMES } from "@/lib/slots";
+import { SLOT_TIMES, isClosedDate } from "@/lib/slots";
 import type { Store } from "@/lib/books/engine";
 
 /**
@@ -246,6 +246,7 @@ function addDaysIso(iso: string, days: number) {
 export function cleanHold(input: HoldInput) {
   if (!SLOT_TIMES.includes(input.time as (typeof SLOT_TIMES)[number])) throw new Error("hora");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new Error("fecha");
+  if (isClosedDate(input.date)) throw new Error("fecha");
   const today = panamaToday();
   if (input.date < today || input.date > addDaysIso(today, BOOK_AHEAD_DAYS)) throw new Error("fecha");
   const party = Math.round(Number(input.party));

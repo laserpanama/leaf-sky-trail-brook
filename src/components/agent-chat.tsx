@@ -115,7 +115,7 @@ export function AgentChat({ lang }: { lang: Lang }) {
     >
       <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
         <div>
-          <p className="font-display text-2xl italic leading-none">{t.title}</p>
+          <p className="font-display text-2xl display-i leading-none">{t.title}</p>
           <p className="mt-1 text-xs text-muted">{t.sub}</p>
         </div>
         <button

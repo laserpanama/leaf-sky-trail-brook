@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { env } from "@/lib/env.server";
 import { houseOpen, ipKey } from "@/lib/casa-ops.server";
 import { agentConfig } from "@/lib/agent/config";
+import { venue } from "@/venue";
 import type {
   AdminReview,
   FeedbackInfo,
@@ -70,7 +71,7 @@ function cleanBody(value: unknown, max: number) {
 }
 
 function siteUrl() {
-  return (env("PUBLIC_SITE_URL") ?? "https://laquintapata.pipolopez.pro").replace(/\/+$/, "");
+  return (env("PUBLIC_SITE_URL") ?? venue.meta.siteUrl).replace(/\/+$/, "");
 }
 
 function panamaDay(offsetDays = 0) {

@@ -1,4 +1,4 @@
-import type { Book } from "./engine";
+import type { Book } from "@/lib/books/engine";
 export const book: Book = {
   "supplies": [
     {

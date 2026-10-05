@@ -4,11 +4,12 @@ import type { Lang } from "@/lib/copy";
 import { getFeedback, sendFeedback, type FeedbackInfo } from "@/lib/reviews";
 import { reviewsCopy } from "@/lib/reviews-copy";
 import { StarPicker } from "@/components/stars";
+import { venue } from "@/venue";
 
 /** Post-visit feedback: private by default, every guest also sees the Google link (no review gating). */
 export const Route = createFileRoute("/opinion/$token")({
   head: () => ({
-    meta: [{ title: "¿Cómo te fue? — La Quinta Pata" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [{ title: venue.messages.feedbackTitle }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: Feedback,
 });
@@ -65,7 +66,7 @@ function Feedback() {
       <header className="border-b border-line">
         <div className="mx-auto flex h-16 max-w-xl items-center justify-between px-5">
           <a href="/" className="font-display text-base tracking-[0.22em] uppercase">
-            La Quinta Pata
+            {venue.name}
           </a>
           <div className="flex border border-line text-xs tracking-widest">
             {(["es", "en"] as const).map((code) => (

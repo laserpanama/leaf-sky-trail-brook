@@ -19,6 +19,7 @@ import {
   type SourceSummary,
 } from "@/lib/reviews";
 import { Stars } from "@/components/stars";
+import { venue } from "@/venue";
 
 type Desk = Awaited<ReturnType<typeof houseReviews>>;
 
@@ -46,7 +47,7 @@ function waNumber(phone: string) {
 
 function waFeedback(item: FeedbackQueueItem) {
   const first = item.name.split(" ")[0];
-  const text = `Hola${first ? ` ${first}` : ""}, gracias por venir a La Quinta Pata. ¿Cómo te fue? Son 20 segundos: ${item.link ?? ""}`;
+  const text = venue.messages.feedback.replace("{name}", first ? ` ${first}` : "").replace("{link}", item.link ?? "");
   return `https://wa.me/${waNumber(item.phone)}?text=${encodeURIComponent(text)}`;
 }
 
