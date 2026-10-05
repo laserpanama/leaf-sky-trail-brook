@@ -34,9 +34,12 @@ async function menuItems() {
   const menu = await readMenu();
   const { replacePlateOverrides, listPlates, plateLabel } = await import("@/lib/plates");
   const { replaceDrinkOverrides, listDrinks, sectionLabel } = await import("@/lib/drinks");
+  // Overrides live in module state shared with SSR: apply them for this synchronous read only,
+  // then clear them, so server-rendered pages keep matching the client.
   replacePlateOverrides(menu.plates);
   replaceDrinkOverrides(menu.drinks);
-  const items: ServiceMenuItem[] = [
+  try {
+    return [
     ...listPlates().map((p) => ({
       kind: "plate" as const,
       id: p.id,
@@ -53,8 +56,11 @@ async function menuItems() {
       price: d.price,
       available: d.available,
     })),
-  ];
-  return items;
+    ] satisfies ServiceMenuItem[];
+  } finally {
+    replacePlateOverrides({});
+    replaceDrinkOverrides({});
+  }
 }
 
 /* ───────────── menu for the floor ───────────── */

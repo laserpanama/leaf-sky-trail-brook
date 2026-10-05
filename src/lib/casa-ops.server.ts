@@ -348,23 +348,31 @@ export async function placeOrder(input: { service: "mesa" | "llevar"; pay: Pay; 
   const menu = await readMenu();
   const { replacePlateOverrides, listPlates } = await import("@/lib/plates");
   const { replaceDrinkOverrides, listDrinks } = await import("@/lib/drinks");
+  // Catalog overrides live in module state that SSR shares: apply them for this synchronous
+  // pricing pass only, then clear them, or the next page render stops matching the client.
   replacePlateOverrides(menu.plates);
   replaceDrinkOverrides(menu.drinks);
-  const priced = input.lines.map((line) => {
-    const qty = Math.round(line.qty);
-    if (!Number.isInteger(qty) || qty < 1 || qty > 20) throw new Error("cantidad");
-    if (line.kind === "plate") {
-      const plate = listPlates().find((item) => item.id === line.id);
-      if (!plate?.available) throw new Error("carta");
-      return { kind: "plate" as const, id: plate.id, qty, price: plate.price };
-    }
-    if (line.kind === "drink") {
-      const drink = listDrinks().find((item) => item.id === line.id);
-      if (!drink?.available) throw new Error("carta");
-      return { kind: "drink" as const, id: drink.id, qty, price: drink.price };
-    }
-    throw new Error("carta");
-  });
+  let priced: { kind: "plate" | "drink"; id: string; qty: number; price: number }[];
+  try {
+    priced = input.lines.map((line) => {
+      const qty = Math.round(line.qty);
+      if (!Number.isInteger(qty) || qty < 1 || qty > 20) throw new Error("cantidad");
+      if (line.kind === "plate") {
+        const plate = listPlates().find((item) => item.id === line.id);
+        if (!plate?.available) throw new Error("carta");
+        return { kind: "plate" as const, id: plate.id, qty, price: plate.price };
+      }
+      if (line.kind === "drink") {
+        const drink = listDrinks().find((item) => item.id === line.id);
+        if (!drink?.available) throw new Error("carta");
+        return { kind: "drink" as const, id: drink.id, qty, price: drink.price };
+      }
+      throw new Error("carta");
+    });
+  } finally {
+    replacePlateOverrides({});
+    replaceDrinkOverrides({});
+  }
   const total = priced.reduce((sum, line) => sum + line.qty * line.price, 0);
   const id = randomUUID();
   const sql = await getSql();
