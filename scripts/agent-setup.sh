@@ -10,7 +10,13 @@ APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$APP_DIR"
 
 # 1. Find where this app's secrets already live (same place as CASA_PASSWORD).
-ENV_FILE="$(grep -rlsE '^(export )?CASA_PASSWORD=' .env .env.production ecosystem.config.* 2>/dev/null | head -1 || true)"
+# On the VPS, lqp-deploy rewrites /etc/laquintapata.env on every deploy; module vars live in the
+# extra file it appends (set up by scripts/servicio-setup.sh). Fall back to the app folder elsewhere.
+if [[ -f /etc/laquintapata.env ]]; then
+  ENV_FILE=/etc/laquintapata.extra.env
+else
+  ENV_FILE="$(grep -rlsE '^(export )?CASA_PASSWORD=' .env .env.production ecosystem.config.* 2>/dev/null | head -1 || true)"
+fi
 if [[ -z "$ENV_FILE" ]]; then
   read -rp "No file with CASA_PASSWORD found. Env file to write [.env]: " ENV_FILE
   ENV_FILE="${ENV_FILE:-.env}"
