@@ -12,6 +12,7 @@ import { AgentChat } from "@/components/agent-chat";
 import { ReviewsSection } from "@/components/reviews-section";
 import { SLOT_TIMES, CLOSED_WEEKDAYS } from "@/lib/slots";
 import { venue } from "@/venue";
+import { Frame, LabelBeers, LabelEvents, LabelFood, LabelHero, TapBand } from "@/components/label-sections";
 import { listDrinks, DRINK_SECTIONS, replaceDrinkOverrides, sectionLabel, money, type Drink } from "@/lib/drinks";
 import { listPlates, PLATE_SECTIONS, plateLabel, replacePlateOverrides, type Plate } from "@/lib/plates";
 
@@ -25,6 +26,7 @@ function waLink(extra?: string) {
 }
 
 export function Site() {
+  const label = venue.layout.style === "label";
   const [lang, setLang] = useState<Lang>("es");
   const t = copy[lang];
   const [held, setHeld] = useState(false);
@@ -277,6 +279,12 @@ export function Site() {
       </header>
 
       <main className="pb-24 md:pb-0">
+        {label ? (
+          <>
+            <LabelHero t={t} lang={lang} beerCount={drinks.filter((d) => d.available && d.abv != null).length} />
+            <TapBand lang={lang} drinks={drinks} />
+          </>
+        ) : (
         <section id="inicio" className="relative min-h-screen overflow-hidden">
           <img
             src={media.hero.src}
@@ -311,8 +319,14 @@ export function Site() {
             </div>
           </div>
         </section>
+        )}
 
-        {venue.layout.drinksFirst ? (
+        {label ? (
+          <>
+            <LabelBeers t={t} lang={lang} drinks={drinks} qtyOf={(id) => qtyOf("drink", id)} onAdd={(id) => addToCart("drink", id)} />
+            <LabelFood t={t} lang={lang} plates={plates} qtyOf={(id) => qtyOf("plate", id)} onAdd={(id) => addToCart("plate", id)} />
+          </>
+        ) : venue.layout.drinksFirst ? (
           <>
             {barraSection}
             {cartaSection}
@@ -324,6 +338,9 @@ export function Site() {
           </>
         )}
 
+        {label ? (
+          <LabelEvents t={t} />
+        ) : (
         <section id="noches" className="relative scroll-mt-20 min-h-[88vh]">
           <img src={media.nights.src} alt={media.nights.alt} width={1100} height={733} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
           <div className="vignette absolute inset-0" />
@@ -346,9 +363,11 @@ export function Site() {
             </div>
           </div>
         </section>
+        )}
 
-        <section id="reservar" className="scroll-mt-20 border-y border-line bg-surface">
-          <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-2">
+        <section id="reservar" className={label ? "mx-auto max-w-6xl scroll-mt-20 px-5 pb-24" : "scroll-mt-20 border-y border-line bg-surface"}>
+          <Frame on={label} inner="bg-surface">
+          <div className={label ? "grid gap-12 px-6 py-12 md:grid-cols-2 md:px-12" : "mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-2"}>
             <div>
               <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.reserveEyebrow}</p>
               <h2 className="mt-3 font-display text-5xl leading-tight display-i">{t.reserveTitle}</h2>
@@ -513,6 +532,7 @@ export function Site() {
               </form>
             )}
           </div>
+          </Frame>
         </section>
 
         <section id="nosotros" className="mx-auto max-w-3xl scroll-mt-20 px-5 py-28">

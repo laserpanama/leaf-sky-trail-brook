@@ -9,7 +9,7 @@ const DESCRIPTION = venue.meta.description;
 const { theme, fonts } = venue;
 
 /** Venue tokens override the defaults in styles.css (same names Tailwind uses). */
-const VENUE_CSS = `:root{--color-bg:${theme.bg};--color-surface:${theme.surface};--color-fg:${theme.fg};--color-muted:${theme.muted};--color-brass:${theme.accent};--color-ink:${theme.ink};--color-line:${theme.line};--font-display:${fonts.display};--font-sans:${fonts.sans};--display-style:${theme.displayStyle}}${theme.displayCss ?? ""}`;
+const VENUE_CSS = `:root{--color-bg:${theme.bg};--color-surface:${theme.surface};--color-fg:${theme.fg};--color-muted:${theme.muted};--color-brass:${theme.accent};--color-ink:${theme.ink};--color-line:${theme.line};--font-display:${fonts.display};--font-sans:${fonts.sans};--display-style:${theme.displayStyle}${fonts.label ? `;--font-label:${fonts.label}` : ""}}${theme.displayCss ?? ""}`;
 
 export const Route = createRootRoute({
   head: () => ({

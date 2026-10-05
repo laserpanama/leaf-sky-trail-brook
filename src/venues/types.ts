@@ -55,6 +55,14 @@ export type Venue = {
   layout: {
     /** Bars and taprooms lead with drinks; restaurants with food. */
     drinksFirst: boolean;
+    /** "classic" (default, La Quinta Pata) or "label" (craft-beer label look). */
+    style?: "classic" | "label";
+    /** Label layout: short facts with icons under the hero. */
+    highlights?: { icon: "paw" | "parking" | "clock" | "music"; es: string; en: string }[];
+    /** Label layout: text on the round seal under the beer count. */
+    seal?: Bi;
+    /** Label layout: icon per entry of copy.nights. */
+    eventIcons?: ("paw" | "parking" | "clock" | "music")[];
   };
   /** Colors map 1:1 to the Tailwind tokens in styles.css. */
   theme: {
@@ -72,7 +80,8 @@ export type Venue = {
     /** Extra CSS for the display face (letter-spacing, case). Optional. */
     displayCss?: string;
   };
-  fonts: { href: string; display: string; sans: string };
+  /** `label`: optional third face for eyebrows, tabs and prices (class `font-label`). */
+  fonts: { href: string; display: string; sans: string; label?: string };
   contact: {
     /** wa.me digits, country code first. */
     whatsapp: string;

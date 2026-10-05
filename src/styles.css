@@ -18,6 +18,12 @@
   font-style: var(--display-style, italic);
 }
 
+/* Label layout: condensed face for eyebrows, family names and prices. */
+.font-label {
+  font-family: var(--font-label, var(--font-sans));
+  font-weight: 600;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

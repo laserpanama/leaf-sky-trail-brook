@@ -16,6 +16,10 @@ export type Drink = {
   available: boolean;
   /** Optional tasting note under the name (style, ABV, IBU…). */
   note?: { es: string; en: string };
+  /** Optional structured beer facts, shown by the "label" layout. */
+  style?: { es: string; en: string };
+  abv?: number;
+  ibu?: number | null;
 };
 
 export const DRINK_TARGET: Record<DrinkSection, number> = {
