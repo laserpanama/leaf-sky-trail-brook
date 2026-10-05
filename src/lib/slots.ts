@@ -1,18 +1,17 @@
-/** Request turns, Panama time (UTC−5, no DST). Not published opening hours. */
-export const SLOT_TIMES = [
-  "18:00",
-  "18:30",
-  "19:00",
-  "19:30",
-  "20:00",
-  "20:30",
-  "21:00",
-  "21:30",
-  "22:00",
-  "22:30",
-] as const;
+import { venue } from "@/venue";
 
-export type SlotTime = (typeof SLOT_TIMES)[number];
+/** Request turns, Panama time (UTC−5, no DST). Not published opening hours. Per venue. */
+export const SLOT_TIMES: readonly string[] = venue.booking.slots;
+
+export type SlotTime = string;
+
+/** Weekdays the venue does not take bookings (0 = Sunday). */
+export const CLOSED_WEEKDAYS: readonly number[] = venue.booking.closedWeekdays;
+
+export function isClosedDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  return CLOSED_WEEKDAYS.includes(new Date(`${date}T12:00:00Z`).getUTCDay());
+}
 
 const SLOT_MS = 30 * 60 * 1000;
 
@@ -25,8 +24,8 @@ export function slotWindow(date: string, time: string): { start: number; end: nu
 
 export function dayBounds(date: string): { timeMin: string; timeMax: string } {
   return {
-    timeMin: `${date}T18:00:00-05:00`,
-    timeMax: `${date}T23:00:00-05:00`,
+    timeMin: `${date}T${SLOT_TIMES[0] ?? "00:00"}:00-05:00`,
+    timeMax: new Date(new Date(`${date}T${SLOT_TIMES[SLOT_TIMES.length - 1] ?? "23:00"}:00-05:00`).getTime() + SLOT_MS).toISOString(),
   };
 }
 

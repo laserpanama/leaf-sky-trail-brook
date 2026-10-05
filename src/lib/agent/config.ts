@@ -1,4 +1,5 @@
 import { SLOT_TIMES } from "@/lib/slots";
+import { venue } from "@/venue";
 
 /**
  * Reservation agent config — the ONE file to regenerate per restaurant when
@@ -40,31 +41,25 @@ export type AgentConfig = {
 
 export const BASE_CONFIG: AgentConfig = {
   restaurant: {
-    name: "La Quinta Pata",
-    kind: "Gastrobar de parrilla, picadas y barra",
-    address: "Av. 5ta Sur, San Francisco, Ciudad de Panamá",
-    whatsapp: "+507 6494-6886",
-    instagram: "@laquintapata_pty",
-    payments: "Visa, Mastercard, efectivo, Yappy",
-    amenities: "Estacionamiento, Wi-Fi",
-    facts: [
-      "Parrilla, picadas y barra. Cócteles de la casa.",
-      "Pantallas para fútbol en vivo.",
-      "Música en vivo algunas noches; se anuncia en Instagram.",
-      "Se puede llegar sin reserva; para grupos es mejor reservar.",
-      "Precios en USD con ITBMS incluido.",
-    ],
+    name: venue.name,
+    kind: venue.agent.kind,
+    address: venue.contact.address,
+    whatsapp: `+${venue.contact.whatsapp.slice(0, 3)} ${venue.contact.whatsappDisplay}`,
+    instagram: `@${venue.contact.instagram}`,
+    payments: venue.agent.payments,
+    amenities: venue.agent.amenities,
+    facts: venue.agent.facts,
   },
   timezone: "America/Panama",
   utcOffset: "-05:00",
   slots: SLOT_TIMES,
   slotMinutes: 30,
-  coversPerSlot: 24,
-  autoConfirmMaxParty: 8,
-  maxParty: 20,
-  bookAheadDays: 90,
-  minLeadMinutes: 60,
-  closedWeekdays: [],
+  coversPerSlot: venue.booking.coversPerSlot,
+  autoConfirmMaxParty: venue.booking.autoConfirmMaxParty,
+  maxParty: venue.booking.maxParty,
+  bookAheadDays: venue.booking.bookAheadDays,
+  minLeadMinutes: venue.booking.minLeadMinutes,
+  closedWeekdays: venue.booking.closedWeekdays,
   defaultLang: "es",
 };
 

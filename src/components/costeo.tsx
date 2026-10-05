@@ -103,7 +103,7 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
         </ul>
       ) : null}
 
-      <h2 className="mt-12 font-display text-3xl italic">Cócteles que más salen</h2>
+      <h2 className="mt-12 font-display text-3xl display-i">Cócteles que más salen</h2>
       {leader ? (
         <p className="mt-3 max-w-lg text-sm text-muted">
           El más pedido fue {leader.drink.es}: {leader.units} {leader.units === 1 ? "trago" : "tragos"}, margen {money(round2(leader.margin))}, costo {pct(leader.pct)}.
@@ -134,7 +134,7 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
 
       {history.length > 1 ? (
         <div className="mt-10">
-          <h2 className="font-display text-3xl italic">Semanas</h2>
+          <h2 className="font-display text-3xl display-i">Semanas</h2>
           <ul className="mt-3 divide-y divide-line border-y border-line">
             {history.map((key) => {
               const roll = sumLines(weekLines(unitsFor(key), webDrinks(key), drinks));
@@ -151,7 +151,7 @@ export function Costeo({ drinks }: { drinks: Drink[] }) {
         </div>
       ) : null}
 
-      <h2 className="mt-12 font-display text-3xl italic">Conteo</h2>
+      <h2 className="mt-12 font-display text-3xl display-i">Conteo</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"

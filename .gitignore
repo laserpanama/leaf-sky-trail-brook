@@ -5,3 +5,7 @@ node_modules/
 .env.*
 .vercel/
 demo-out/
+
+# Generated per venue by scripts/use-venue.mjs (source: src/venues/<slug>/)
+/public/
+/src/lib/og/site.json

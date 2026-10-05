@@ -159,7 +159,7 @@ export function KitchenWeek({ plates }: { plates: Plate[] }) {
           ))}
         </ul>
       ) : null}
-      <h2 className="mt-12 font-display text-3xl italic">Lo que más sale</h2>
+      <h2 className="mt-12 font-display text-3xl display-i">Lo que más sale</h2>
       {leader ? (
         <p className="mt-3 max-w-lg text-sm text-muted">
           El más pedido fue {leader.plate.es}: {leader.units} {leader.units === 1 ? "plato" : "platos"}, margen {money(round2(leader.margin))}, costo {pct(leader.pct)}.
@@ -202,7 +202,7 @@ export function KitchenWeek({ plates }: { plates: Plate[] }) {
           })}
         </ul>
       ) : null}
-      <h2 className="mt-12 font-display text-3xl italic">Conteo</h2>
+      <h2 className="mt-12 font-display text-3xl display-i">Conteo</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"

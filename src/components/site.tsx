@@ -10,12 +10,15 @@ import { addToCart, cartLines, hydrateCart, type CartLine } from "@/lib/cart";
 import { CartDrawer } from "@/components/cart-drawer";
 import { AgentChat } from "@/components/agent-chat";
 import { ReviewsSection } from "@/components/reviews-section";
-import { SLOT_TIMES } from "@/lib/slots";
+import { SLOT_TIMES, CLOSED_WEEKDAYS } from "@/lib/slots";
+import { venue } from "@/venue";
+import { Frame, LabelBeers, LabelEvents, LabelFood, LabelHero, TapBand } from "@/components/label-sections";
 import { listDrinks, DRINK_SECTIONS, replaceDrinkOverrides, sectionLabel, money, type Drink } from "@/lib/drinks";
 import { listPlates, PLATE_SECTIONS, plateLabel, replacePlateOverrides, type Plate } from "@/lib/plates";
 
-const MAP =
-  "https://www.openstreetmap.org/export/embed.html?bbox=-79.508%2C8.987%2C-79.496%2C8.995&layer=mapnik&marker=8.9912661%2C-79.5020383";
+const MAP = venue.contact.map.embed;
+const IG_URL = `https://www.instagram.com/${venue.contact.instagram}/`;
+const { media } = venue;
 
 function waLink(extra?: string) {
   const text = extra ? `${WA_BASE} ${extra}` : WA_BASE;
@@ -23,6 +26,7 @@ function waLink(extra?: string) {
 }
 
 export function Site() {
+  const label = venue.layout.style === "label";
   const [lang, setLang] = useState<Lang>("es");
   const t = copy[lang];
   const [held, setHeld] = useState(false);
@@ -88,6 +92,111 @@ export function Site() {
     return cart.find((line) => line.kind === kind && line.id === id)?.qty ?? 0;
   }
 
+  const cartaSection = (
+        <section id="carta" className="scroll-mt-20 py-24">
+          <div className="mx-auto max-w-6xl px-5">
+            <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.cartaEyebrow}</p>
+            <h2 className="mt-4 max-w-3xl font-display text-6xl leading-[0.92] display-i md:text-7xl">{t.cartaTitle}</h2>
+            <p className="mt-6 max-w-md text-sm text-muted">{t.cartaNote}</p>
+          </div>
+          {PLATE_SECTIONS.map((section) => {
+            const items = plates.filter((plate) => plate.section === section && plate.available);
+            if (!items.length) return null;
+            return (
+              <div key={section} className="mx-auto mt-20 max-w-6xl px-5">
+                <h3 className="font-display text-4xl display-i md:text-5xl">{plateLabel[section][lang]}</h3>
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {items.map((plate, index) => (
+                    <PlateStill
+                      key={plate.id}
+                      plate={plate}
+                      lang={lang}
+                      lead={index === 0}
+                      qty={qtyOf("plate", plate.id)}
+                      addLabel={t.cartAdd}
+                      onAdd={() => addToCart("plate", plate.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+  );
+
+  const barraSection = (
+        <section id="barra" className="scroll-mt-20 border-y border-line bg-surface">
+          <div className="mx-auto grid max-w-6xl items-stretch md:grid-cols-2">
+            <figure className="frame min-h-96">
+              <img src={media.bar.src} alt={media.bar.alt} width={1100} height={733} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            </figure>
+            <div className="flex flex-col justify-center px-5 py-20 md:px-14">
+              <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.barEyebrow}</p>
+              <h2 className="mt-4 font-display text-6xl leading-[0.92] display-i">{t.barTitle}</h2>
+              <p className="mt-5 text-muted">{t.barLead}</p>
+            </div>
+          </div>
+          <div className="mx-auto max-w-6xl px-5 pb-16">
+            {DRINK_SECTIONS.map((section) => {
+              const items = drinks.filter((drink) => drink.section === section && drink.available);
+              if (!items.length) return null;
+              return (
+                <div key={section} className="mt-10">
+                  <h3 className="font-display text-3xl display-i">{sectionLabel[section][lang]}</h3>
+                  <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
+                    {items.map((drink) => (
+                      drink.note ? (
+                        <li key={drink.id} className="py-3 break-inside-avoid">
+                          <div className="flex items-center gap-3">
+                            <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
+                            <span className="leader mb-1 min-w-6 flex-1" />
+                            <span className="text-brass">{money(drink.price)}</span>
+                            <button
+                              type="button"
+                              aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
+                              onClick={() => addToCart("drink", drink.id)}
+                              className="min-h-11 min-w-11 border border-line text-brass"
+                            >
+                              {qtyOf("drink", drink.id) || "+"}
+                            </button>
+                          </div>
+                          <p className="-mt-1 pr-14 text-sm leading-snug text-muted">{drink.note[lang]}</p>
+                        </li>
+                      ) : (
+                      <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
+                        {drink.img && (
+                          <img
+                            src={drink.img}
+                            alt={lang === "es" ? drink.es : drink.en}
+                            loading="lazy"
+                            width={56}
+                            height={56}
+                            decoding="async"
+                            className="h-14 w-14 shrink-0 rounded-[10px] object-cover"
+                          />
+                        )}
+                        <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
+                        <span className="leader mb-1 min-w-6 flex-1" />
+                        <span className="text-brass">{money(drink.price)}</span>
+                        <button
+                          type="button"
+                          aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
+                          onClick={() => addToCart("drink", drink.id)}
+                          className="min-h-11 min-w-11 border border-line text-brass"
+                        >
+                          {qtyOf("drink", drink.id) || "+"}
+                        </button>
+                      </li>
+                      )
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+  );
+
   return (
     <div className="min-h-screen bg-bg text-fg">
       <script
@@ -95,27 +204,36 @@ export function Site() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Restaurant",
-            name: "La Quinta Pata",
-            servesCuisine: "Gastrobar",
+            "@type": venue.jsonld.type,
+            name: venue.name,
+            servesCuisine: venue.jsonld.cuisine,
             address: {
               "@type": "PostalAddress",
-              streetAddress: "Av. 5ta Sur",
-              addressLocality: "San Francisco",
+              streetAddress: venue.contact.streetAddress,
+              addressLocality: venue.contact.locality,
               addressRegion: "Panamá",
               addressCountry: "PA",
             },
-            telephone: "+507****6886",
-            sameAs: "https://www.instagram.com/laquintapata_pty/",
+            telephone: venue.jsonld.telephone,
+            sameAs: IG_URL,
             currenciesAccepted: "USD",
-            paymentAccepted: "Cash, Visa, Mastercard, Yappy",
+            paymentAccepted: venue.jsonld.payment,
           }),
         }}
       />
       <header className="sticky top-0 z-40 border-b border-line/80 bg-bg/80 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-6xl items-center gap-8 px-5">
-          <a href="#inicio" className="font-display text-base tracking-[0.14em] text-fg uppercase sm:text-xl sm:tracking-[0.22em]">
-            La Quinta Pata
+          <a href="#inicio" className={`${venue.logo ? "flex items-center gap-3 " : ""}font-display text-base tracking-[0.14em] text-fg uppercase sm:text-xl sm:tracking-[0.22em]`}>
+            {venue.logo ? (
+              <img
+                src={venue.logo.src}
+                alt={venue.logo.replacesName ? venue.name : ""}
+                width={venue.logo.width}
+                height={venue.logo.height}
+                className={venue.logo.round ? "h-10 w-10 rounded-full" : "h-12 w-auto"}
+              />
+            ) : null}
+            {venue.logo?.replacesName ? null : venue.name}
           </a>
           <nav className="hidden flex-1 items-center gap-6 md:flex">
             {t.nav.map((item) => (
@@ -161,10 +279,16 @@ export function Site() {
       </header>
 
       <main className="pb-24 md:pb-0">
+        {label ? (
+          <>
+            <LabelHero t={t} lang={lang} beerCount={drinks.filter((d) => d.available && d.abv != null).length} />
+            <TapBand lang={lang} drinks={drinks} />
+          </>
+        ) : (
         <section id="inicio" className="relative min-h-screen overflow-hidden">
           <img
-            src="/media/hero.webp"
-            alt="Brasa en la parrilla de La Quinta Pata"
+            src={media.hero.src}
+            alt={media.hero.alt}
             width={1400}
             height={933}
             fetchPriority="high"
@@ -177,7 +301,7 @@ export function Site() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-bg via-bg/80 to-transparent" />
             <div className="relative">
             <p className="text-xs tracking-[0.32em] text-brass uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] sm:tracking-[0.42em]">{t.kicker}</p>
-            <h1 className="mt-6 max-w-5xl font-display text-7xl leading-[0.88] font-medium text-fg italic drop-shadow-[0_2px_16px_rgba(0,0,0,0.75)] md:text-8xl">
+            <h1 className="mt-6 max-w-5xl font-display text-7xl leading-[0.88] font-medium text-fg display-i drop-shadow-[0_2px_16px_rgba(0,0,0,0.75)] md:text-8xl">
               {t.heroLine}
             </h1>
             <p className="mt-8 max-w-sm text-lg text-fg/90">{t.heroSub}</p>
@@ -186,7 +310,7 @@ export function Site() {
                 {t.reserve}
               </a>
               <a
-                href="#carta"
+                href={venue.layout.drinksFirst ? "#barra" : "#carta"}
                 className="inline-flex min-h-11 items-center border border-fg/40 px-5 text-fg"
               >
                 {t.menu}
@@ -195,99 +319,38 @@ export function Site() {
             </div>
           </div>
         </section>
+        )}
 
-        <section id="carta" className="scroll-mt-20 py-24">
-          <div className="mx-auto max-w-6xl px-5">
-            <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.cartaEyebrow}</p>
-            <h2 className="mt-4 max-w-3xl font-display text-6xl leading-[0.92] italic md:text-7xl">{t.cartaTitle}</h2>
-            <p className="mt-6 max-w-md text-sm text-muted">{t.cartaNote}</p>
-          </div>
-          {PLATE_SECTIONS.map((section) => {
-            const items = plates.filter((plate) => plate.section === section && plate.available);
-            if (!items.length) return null;
-            return (
-              <div key={section} className="mx-auto mt-20 max-w-6xl px-5">
-                <h3 className="font-display text-4xl italic md:text-5xl">{plateLabel[section][lang]}</h3>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {items.map((plate, index) => (
-                    <PlateStill
-                      key={plate.id}
-                      plate={plate}
-                      lang={lang}
-                      lead={index === 0}
-                      qty={qtyOf("plate", plate.id)}
-                      addLabel={t.cartAdd}
-                      onAdd={() => addToCart("plate", plate.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </section>
+        {label ? (
+          <>
+            <LabelBeers t={t} lang={lang} drinks={drinks} qtyOf={(id) => qtyOf("drink", id)} onAdd={(id) => addToCart("drink", id)} />
+            <LabelFood t={t} lang={lang} plates={plates} qtyOf={(id) => qtyOf("plate", id)} onAdd={(id) => addToCart("plate", id)} />
+          </>
+        ) : venue.layout.drinksFirst ? (
+          <>
+            {barraSection}
+            {cartaSection}
+          </>
+        ) : (
+          <>
+            {cartaSection}
+            {barraSection}
+          </>
+        )}
 
-        <section id="barra" className="scroll-mt-20 border-y border-line bg-surface">
-          <div className="mx-auto grid max-w-6xl items-stretch md:grid-cols-2">
-            <figure className="frame min-h-96">
-              <img src="/media/bar.webp" alt="La barra, de noche" width={1100} height={733} loading="lazy" decoding="async" className="h-full w-full object-cover" />
-            </figure>
-            <div className="flex flex-col justify-center px-5 py-20 md:px-14">
-              <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.barEyebrow}</p>
-              <h2 className="mt-4 font-display text-6xl leading-[0.92] italic">{t.barTitle}</h2>
-              <p className="mt-5 text-muted">{t.barLead}</p>
-            </div>
-          </div>
-          <div className="mx-auto max-w-6xl px-5 pb-16">
-            {DRINK_SECTIONS.map((section) => {
-              const items = drinks.filter((drink) => drink.section === section && drink.available);
-              if (!items.length) return null;
-              return (
-                <div key={section} className="mt-10">
-                  <h3 className="font-display text-3xl italic">{sectionLabel[section][lang]}</h3>
-                  <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
-                    {items.map((drink) => (
-                      <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
-                        {drink.img && (
-                          <img
-                            src={drink.img}
-                            alt={lang === "es" ? drink.es : drink.en}
-                            loading="lazy"
-                            width={56}
-                            height={56}
-                            decoding="async"
-                            className="h-14 w-14 shrink-0 rounded-[10px] object-cover"
-                          />
-                        )}
-                        <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
-                        <span className="leader mb-1 min-w-6 flex-1" />
-                        <span className="text-brass">{money(drink.price)}</span>
-                        <button
-                          type="button"
-                          aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
-                          onClick={() => addToCart("drink", drink.id)}
-                          className="min-h-11 min-w-11 border border-line text-brass"
-                        >
-                          {qtyOf("drink", drink.id) || "+"}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
+        {label ? (
+          <LabelEvents t={t} />
+        ) : (
         <section id="noches" className="relative scroll-mt-20 min-h-[88vh]">
-          <img src="/media/match.webp" alt="El salón con el partido en las pantallas" width={1100} height={733} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={media.nights.src} alt={media.nights.alt} width={1100} height={733} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
           <div className="vignette absolute inset-0" />
           <div className="grain absolute inset-0" />
           <div className="relative mx-auto flex min-h-[88vh] max-w-6xl flex-col justify-end px-5 py-20">
             <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.nightsEyebrow}</p>
-            <h2 className="mt-4 max-w-xl font-display text-6xl leading-[0.92] italic">{t.nightsTitle}</h2>
+            <h2 className="mt-4 max-w-xl font-display text-6xl leading-[0.92] display-i">{t.nightsTitle}</h2>
             <div className="mt-10 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
               <figure className="frame hidden md:block">
-                <img src="/media/stage.webp" alt="Tarima para música en vivo" width={1100} height={400} loading="lazy" decoding="async" className="h-56 w-full object-cover" />
+                <img src={media.stage.src} alt={media.stage.alt} width={1100} height={400} loading="lazy" decoding="async" className="h-56 w-full object-cover" />
               </figure>
               <ul className="grid gap-6">
                 {t.nights.map((n) => (
@@ -300,12 +363,14 @@ export function Site() {
             </div>
           </div>
         </section>
+        )}
 
-        <section id="reservar" className="scroll-mt-20 border-y border-line bg-surface">
-          <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-2">
+        <section id="reservar" className={label ? "mx-auto max-w-6xl scroll-mt-20 px-5 pb-24" : "scroll-mt-20 border-y border-line bg-surface"}>
+          <Frame on={label} outer="bg-surface">
+          <div className={label ? "grid gap-12 px-6 py-12 md:grid-cols-2 md:px-12" : "mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-2"}>
             <div>
-              <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.reserveEyebrow}</p>
-              <h2 className="mt-3 font-display text-5xl leading-tight italic">{t.reserveTitle}</h2>
+              {label ? null : <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.reserveEyebrow}</p>}
+              <h2 className="mt-3 font-display text-5xl leading-tight display-i">{t.reserveTitle}</h2>
               <p className="mt-5 text-muted">{t.reserveLead}</p>
               <a
                 href={waLink(message)}
@@ -313,7 +378,7 @@ export function Site() {
                 rel="noreferrer"
                 className="mt-8 inline-flex min-h-11 items-center bg-brass px-5 text-ink"
               >
-                {t.wa} · 6494-6886
+                {t.wa} · {venue.contact.whatsappDisplay}
               </a>
             </div>
             {held ? (
@@ -402,11 +467,11 @@ export function Site() {
                     <input
                       required
                       min={1}
-                      max={20}
+                      max={venue.booking.maxParty}
                       type="number"
                       value={form.party}
                       onChange={(e) => setForm({ ...form, party: e.target.value })}
-                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                      className="min-h-11 w-full min-w-0 border border-line bg-bg px-3 text-fg"
                     />
                   </label>
                 </div>
@@ -420,7 +485,7 @@ export function Site() {
                       autoComplete="name"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                      className="min-h-11 w-full min-w-0 border border-line bg-bg px-3 text-fg"
                     />
                   </label>
                   <label className="grid gap-2 text-sm text-muted">
@@ -434,7 +499,7 @@ export function Site() {
                       placeholder={t.phonePh}
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                      className="min-h-11 w-full min-w-0 border border-line bg-bg px-3 text-fg"
                     />
                   </label>
                 </div>
@@ -467,23 +532,24 @@ export function Site() {
               </form>
             )}
           </div>
+          </Frame>
         </section>
 
         <section id="nosotros" className="mx-auto max-w-3xl scroll-mt-20 px-5 py-28">
           <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.aboutEyebrow}</p>
           {t.about.map((p) => (
-            <p key={p} className="mt-8 font-display text-4xl leading-snug text-fg italic">
+            <p key={p} className="mt-8 font-display text-4xl leading-snug text-fg display-i">
               {p}
             </p>
           ))}
         </section>
 
-        <ReviewsSection lang={lang} />
+        <ReviewsSection lang={lang} plain={label} />
 
         <section id="visita" className="scroll-mt-20 border-t border-line">
           <div className="mx-auto grid max-w-6xl gap-8 px-5 py-20 md:grid-cols-2">
             <div>
-              <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.visitEyebrow}</p>
+              {label ? null : <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.visitEyebrow}</p>}
               <h2 className="mt-3 font-display text-5xl leading-tight">{t.visitTitle}</h2>
               <p className="mt-5 text-fg">{t.address}</p>
               <p className="mt-2 text-sm text-muted">{t.mapNote}</p>
@@ -491,7 +557,7 @@ export function Site() {
               <p className="mt-1 text-sm text-muted">{t.amenities}</p>
               <a
                 className="mt-6 inline-flex text-brass"
-                href="https://www.instagram.com/laquintapata_pty/"
+                href={IG_URL}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -499,7 +565,7 @@ export function Site() {
               </a>
             </div>
             <iframe
-              title="Av. 5ta Sur, San Francisco, Panamá"
+              title={venue.contact.map.title}
               src={MAP}
               className="h-80 w-full border border-line grayscale"
             />
@@ -508,8 +574,8 @@ export function Site() {
       </main>
 
       <footer className="border-t border-line px-5 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted">
-          <p className="text-fg">Av. 5ta Sur, San Francisco · 6494-6886 · @laquintapata_pty · Yappy</p>
+        <div className={label ? "mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted [&>p]:max-w-prose" : "mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted"}>
+          <p className="text-fg">{venue.contact.footer}</p>
           <p>{t.legal}</p>
           <p>{t.legal2}</p>
         </div>
@@ -558,9 +624,12 @@ function PlateStill({
 }) {
   const name = lang === "es" ? plate.es : plate.en;
   const portion = lang === "es" ? plate.portionEs : plate.portionEn;
+  // A venue with a placeholder keeps photo-less dishes compact instead of a big empty frame.
+  const compact = !plate.img && Boolean(venue.placeholder);
+  if (compact) lead = false;
   return (
     <article className={lead ? "md:col-span-2" : ""}>
-      <figure className={`frame relative ${lead ? "h-[70vh] min-h-96" : "h-80"}`}>
+      <figure className={`frame relative ${lead ? "h-[70vh] min-h-96" : compact ? "h-56" : "h-80"}`}>
         {plate.img ? (
           <img
             src={plate.img}
@@ -571,6 +640,10 @@ function PlateStill({
             decoding="async"
             className="h-full w-full object-cover"
           />
+        ) : venue.placeholder ? (
+          <div className="flex h-full w-full items-center justify-center bg-surface">
+            <img src={venue.placeholder} alt="" width={lead ? 220 : 140} height={lead ? 220 : 140} className="opacity-15" />
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center" style={{ background: "#e0d5c3" }}>
             <svg viewBox="0 0 32 32" width={lead ? 220 : 140} height={lead ? 220 : 140} aria-hidden="true" style={{ opacity: 0.14 }}>
@@ -585,7 +658,7 @@ function PlateStill({
         <div className="still-fade absolute inset-0" />
         <figcaption className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 px-5 py-5">
           <div>
-            <h4 className={`font-display leading-none italic ${lead ? "text-5xl md:text-6xl" : "text-3xl"}`}>{name}</h4>
+            <h4 className={`font-display leading-none display-i ${lead ? "text-5xl md:text-6xl" : "text-3xl"}`}>{name}</h4>
             <p className="mt-2 max-w-md text-sm text-fg/75">{portion}</p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -662,7 +735,7 @@ function ReserveCalendar({
       : "Pick a day";
 
   return (
-    <div className="lqp-cal border border-line bg-bg p-3">
+    <div className={venue.layout.style === "label" ? "lqp-cal" : "lqp-cal border border-line bg-bg p-3"}>
       <p className="px-2 pb-2 font-display text-2xl text-fg">{label}</p>
       <DayPicker
         mode="single"
@@ -673,7 +746,7 @@ function ReserveCalendar({
         onSelect={(day) => {
           if (day) onChange(format(day, "yyyy-MM-dd"));
         }}
-        disabled={{ before: startOfToday() }}
+        disabled={CLOSED_WEEKDAYS.length ? [{ before: startOfToday() }, { dayOfWeek: [...CLOSED_WEEKDAYS] }] : { before: startOfToday() }}
         defaultMonth={selected ?? startOfToday()}
       />
     </div>
