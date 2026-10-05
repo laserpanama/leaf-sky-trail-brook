@@ -90,6 +90,92 @@ export function Site() {
     return cart.find((line) => line.kind === kind && line.id === id)?.qty ?? 0;
   }
 
+  const cartaSection = (
+        <section id="carta" className="scroll-mt-20 py-24">
+          <div className="mx-auto max-w-6xl px-5">
+            <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.cartaEyebrow}</p>
+            <h2 className="mt-4 max-w-3xl font-display text-6xl leading-[0.92] display-i md:text-7xl">{t.cartaTitle}</h2>
+            <p className="mt-6 max-w-md text-sm text-muted">{t.cartaNote}</p>
+          </div>
+          {PLATE_SECTIONS.map((section) => {
+            const items = plates.filter((plate) => plate.section === section && plate.available);
+            if (!items.length) return null;
+            return (
+              <div key={section} className="mx-auto mt-20 max-w-6xl px-5">
+                <h3 className="font-display text-4xl display-i md:text-5xl">{plateLabel[section][lang]}</h3>
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {items.map((plate, index) => (
+                    <PlateStill
+                      key={plate.id}
+                      plate={plate}
+                      lang={lang}
+                      lead={index === 0}
+                      qty={qtyOf("plate", plate.id)}
+                      addLabel={t.cartAdd}
+                      onAdd={() => addToCart("plate", plate.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+  );
+
+  const barraSection = (
+        <section id="barra" className="scroll-mt-20 border-y border-line bg-surface">
+          <div className="mx-auto grid max-w-6xl items-stretch md:grid-cols-2">
+            <figure className="frame min-h-96">
+              <img src={media.bar.src} alt={media.bar.alt} width={1100} height={733} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            </figure>
+            <div className="flex flex-col justify-center px-5 py-20 md:px-14">
+              <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.barEyebrow}</p>
+              <h2 className="mt-4 font-display text-6xl leading-[0.92] display-i">{t.barTitle}</h2>
+              <p className="mt-5 text-muted">{t.barLead}</p>
+            </div>
+          </div>
+          <div className="mx-auto max-w-6xl px-5 pb-16">
+            {DRINK_SECTIONS.map((section) => {
+              const items = drinks.filter((drink) => drink.section === section && drink.available);
+              if (!items.length) return null;
+              return (
+                <div key={section} className="mt-10">
+                  <h3 className="font-display text-3xl display-i">{sectionLabel[section][lang]}</h3>
+                  <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
+                    {items.map((drink) => (
+                      <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
+                        {drink.img && (
+                          <img
+                            src={drink.img}
+                            alt={lang === "es" ? drink.es : drink.en}
+                            loading="lazy"
+                            width={56}
+                            height={56}
+                            decoding="async"
+                            className="h-14 w-14 shrink-0 rounded-[10px] object-cover"
+                          />
+                        )}
+                        <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
+                        <span className="leader mb-1 min-w-6 flex-1" />
+                        <span className="text-brass">{money(drink.price)}</span>
+                        <button
+                          type="button"
+                          aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
+                          onClick={() => addToCart("drink", drink.id)}
+                          className="min-h-11 min-w-11 border border-line text-brass"
+                        >
+                          {qtyOf("drink", drink.id) || "+"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+  );
+
   return (
     <div className="min-h-screen bg-bg text-fg">
       <script
@@ -116,7 +202,8 @@ export function Site() {
       />
       <header className="sticky top-0 z-40 border-b border-line/80 bg-bg/80 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-6xl items-center gap-8 px-5">
-          <a href="#inicio" className="font-display text-base tracking-[0.14em] text-fg uppercase sm:text-xl sm:tracking-[0.22em]">
+          <a href="#inicio" className={`${venue.logo ? "flex items-center gap-3 " : ""}font-display text-base tracking-[0.14em] text-fg uppercase sm:text-xl sm:tracking-[0.22em]`}>
+            {venue.logo ? <img src={venue.logo} alt="" width={40} height={40} className="h-10 w-10 rounded-full" /> : null}
             {venue.name}
           </a>
           <nav className="hidden flex-1 items-center gap-6 md:flex">
@@ -188,7 +275,7 @@ export function Site() {
                 {t.reserve}
               </a>
               <a
-                href="#carta"
+                href={venue.layout.drinksFirst ? "#barra" : "#carta"}
                 className="inline-flex min-h-11 items-center border border-fg/40 px-5 text-fg"
               >
                 {t.menu}
@@ -198,87 +285,17 @@ export function Site() {
           </div>
         </section>
 
-        <section id="carta" className="scroll-mt-20 py-24">
-          <div className="mx-auto max-w-6xl px-5">
-            <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.cartaEyebrow}</p>
-            <h2 className="mt-4 max-w-3xl font-display text-6xl leading-[0.92] display-i md:text-7xl">{t.cartaTitle}</h2>
-            <p className="mt-6 max-w-md text-sm text-muted">{t.cartaNote}</p>
-          </div>
-          {PLATE_SECTIONS.map((section) => {
-            const items = plates.filter((plate) => plate.section === section && plate.available);
-            if (!items.length) return null;
-            return (
-              <div key={section} className="mx-auto mt-20 max-w-6xl px-5">
-                <h3 className="font-display text-4xl display-i md:text-5xl">{plateLabel[section][lang]}</h3>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {items.map((plate, index) => (
-                    <PlateStill
-                      key={plate.id}
-                      plate={plate}
-                      lang={lang}
-                      lead={index === 0}
-                      qty={qtyOf("plate", plate.id)}
-                      addLabel={t.cartAdd}
-                      onAdd={() => addToCart("plate", plate.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </section>
-
-        <section id="barra" className="scroll-mt-20 border-y border-line bg-surface">
-          <div className="mx-auto grid max-w-6xl items-stretch md:grid-cols-2">
-            <figure className="frame min-h-96">
-              <img src={media.bar.src} alt={media.bar.alt} width={1100} height={733} loading="lazy" decoding="async" className="h-full w-full object-cover" />
-            </figure>
-            <div className="flex flex-col justify-center px-5 py-20 md:px-14">
-              <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.barEyebrow}</p>
-              <h2 className="mt-4 font-display text-6xl leading-[0.92] display-i">{t.barTitle}</h2>
-              <p className="mt-5 text-muted">{t.barLead}</p>
-            </div>
-          </div>
-          <div className="mx-auto max-w-6xl px-5 pb-16">
-            {DRINK_SECTIONS.map((section) => {
-              const items = drinks.filter((drink) => drink.section === section && drink.available);
-              if (!items.length) return null;
-              return (
-                <div key={section} className="mt-10">
-                  <h3 className="font-display text-3xl display-i">{sectionLabel[section][lang]}</h3>
-                  <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
-                    {items.map((drink) => (
-                      <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
-                        {drink.img && (
-                          <img
-                            src={drink.img}
-                            alt={lang === "es" ? drink.es : drink.en}
-                            loading="lazy"
-                            width={56}
-                            height={56}
-                            decoding="async"
-                            className="h-14 w-14 shrink-0 rounded-[10px] object-cover"
-                          />
-                        )}
-                        <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
-                        <span className="leader mb-1 min-w-6 flex-1" />
-                        <span className="text-brass">{money(drink.price)}</span>
-                        <button
-                          type="button"
-                          aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
-                          onClick={() => addToCart("drink", drink.id)}
-                          className="min-h-11 min-w-11 border border-line text-brass"
-                        >
-                          {qtyOf("drink", drink.id) || "+"}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        {venue.layout.drinksFirst ? (
+          <>
+            {barraSection}
+            {cartaSection}
+          </>
+        ) : (
+          <>
+            {cartaSection}
+            {barraSection}
+          </>
+        )}
 
         <section id="noches" className="relative scroll-mt-20 min-h-[88vh]">
           <img src={media.nights.src} alt={media.nights.alt} width={1100} height={733} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
@@ -560,9 +577,12 @@ function PlateStill({
 }) {
   const name = lang === "es" ? plate.es : plate.en;
   const portion = lang === "es" ? plate.portionEs : plate.portionEn;
+  // A venue with a placeholder keeps photo-less dishes compact instead of a big empty frame.
+  const compact = !plate.img && Boolean(venue.placeholder);
+  if (compact) lead = false;
   return (
     <article className={lead ? "md:col-span-2" : ""}>
-      <figure className={`frame relative ${lead ? "h-[70vh] min-h-96" : "h-80"}`}>
+      <figure className={`frame relative ${lead ? "h-[70vh] min-h-96" : compact ? "h-56" : "h-80"}`}>
         {plate.img ? (
           <img
             src={plate.img}
@@ -573,6 +593,10 @@ function PlateStill({
             decoding="async"
             className="h-full w-full object-cover"
           />
+        ) : venue.placeholder ? (
+          <div className="flex h-full w-full items-center justify-center bg-surface">
+            <img src={venue.placeholder} alt="" width={lead ? 220 : 140} height={lead ? 220 : 140} className="opacity-15" />
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center" style={{ background: "#e0d5c3" }}>
             <svg viewBox="0 0 32 32" width={lead ? 220 : 140} height={lead ? 220 : 140} aria-hidden="true" style={{ opacity: 0.14 }}>

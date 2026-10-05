@@ -11,7 +11,9 @@ const venue: Venue = {
     description:
       "Gastrobar de parrilla, picadas y barra en Av. 5ta Sur, San Francisco, Ciudad de Panamá. Reservas por WhatsApp.",
     siteUrl: "https://laquintapata.pipolopez.pro",
+    favicon: { href: "/favicon.svg", type: "image/svg+xml" },
   },
+  layout: { drinksFirst: false },
   theme: {
     bg: "#110f0d",
     surface: "#1a1714",

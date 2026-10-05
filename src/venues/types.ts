@@ -43,6 +43,15 @@ export type Venue = {
     description: string;
     /** Public origin, no trailing slash. Used in review links. */
     siteUrl: string;
+    favicon: { href: string; type: string };
+  };
+  /** Small round logo shown beside the name in the header. Optional. */
+  logo?: string;
+  /** Shown faded on dishes without a photo. Optional; default is the LQP glyph. */
+  placeholder?: string;
+  layout: {
+    /** Bars and taprooms lead with drinks; restaurants with food. */
+    drinksFirst: boolean;
   };
   /** Colors map 1:1 to the Tailwind tokens in styles.css. */
   theme: {

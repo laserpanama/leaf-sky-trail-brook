@@ -21,7 +21,7 @@ export const Route = createRootRoute({
       { name: "theme-color", content: theme.bg },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: venue.meta.favicon.type, href: venue.meta.favicon.href },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },

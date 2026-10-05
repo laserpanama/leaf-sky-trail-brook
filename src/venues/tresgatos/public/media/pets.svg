@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 400" width="1100" height="400">
+<rect width="1100" height="400" fill="#18181a"/>
+<g transform="translate(120 300) rotate(0)" fill="#f0a630" opacity=".85"><ellipse cx="0" cy="18" rx="22" ry="18"/><circle cx="-22" cy="-8" r="9"/><circle cx="-8" cy="-20" r="9"/><circle cx="8" cy="-20" r="9"/><circle cx="22" cy="-8" r="9"/></g><g transform="translate(230 240) rotate(15)" fill="#f0a630" opacity=".85"><ellipse cx="0" cy="18" rx="22" ry="18"/><circle cx="-22" cy="-8" r="9"/><circle cx="-8" cy="-20" r="9"/><circle cx="8" cy="-20" r="9"/><circle cx="22" cy="-8" r="9"/></g><g transform="translate(340 300) rotate(-5)" fill="#f0a630" opacity=".85"><ellipse cx="0" cy="18" rx="22" ry="18"/><circle cx="-22" cy="-8" r="9"/><circle cx="-8" cy="-20" r="9"/><circle cx="8" cy="-20" r="9"/><circle cx="22" cy="-8" r="9"/></g><g transform="translate(450 230) rotate(20)" fill="#f0a630" opacity=".85"><ellipse cx="0" cy="18" rx="22" ry="18"/><circle cx="-22" cy="-8" r="9"/><circle cx="-8" cy="-20" r="9"/><circle cx="8" cy="-20" r="9"/><circle cx="22" cy="-8" r="9"/></g><g transform="translate(860 250) rotate(-10)" fill="#f0a630" opacity=".85"><ellipse cx="0" cy="18" rx="22" ry="18"/><circle cx="-22" cy="-8" r="9"/><circle cx="-8" cy="-20" r="9"/><circle cx="8" cy="-20" r="9"/><circle cx="22" cy="-8" r="9"/></g><g transform="translate(970 310) rotate(10)" fill="#f0a630" opacity=".85"><ellipse cx="0" cy="18" rx="22" ry="18"/><circle cx="-22" cy="-8" r="9"/><circle cx="-8" cy="-20" r="9"/><circle cx="8" cy="-20" r="9"/><circle cx="22" cy="-8" r="9"/></g>
+<g transform="translate(560 220)" fill="#f1eee6">
+<ellipse cx="0" cy="60" rx="120" ry="60"/>
+<circle cx="-110" cy="10" r="58"/>
+<path d="M-150 -30 l-30 -60 l50 30z"/><path d="M-80 -40 l10 -65 l30 55z"/>
+<rect x="60" y="20" width="90" height="22" rx="11" transform="rotate(-30 60 20)"/>
+<circle cx="-128" cy="2" r="7" fill="#0d0d0e"/><circle cx="-92" cy="2" r="7" fill="#0d0d0e"/>
+<ellipse cx="-110" cy="28" rx="11" ry="8" fill="#0d0d0e"/>
+</g>
+</svg>

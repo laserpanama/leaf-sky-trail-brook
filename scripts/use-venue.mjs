@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const venueSlug = () => (process.env.VENUE || "laquintapata").trim();
 
-export function useVenue(slug = venueSlug()) {
+export function stageVenue(slug = venueSlug()) {
   if (!/^[a-z0-9-]+$/.test(slug)) throw new Error(`VENUE inválido: ${slug}`);
   const dir = join(root, "src/venues", slug);
   for (const need of ["index.ts", "site.json", "public"]) {
@@ -25,5 +25,5 @@ export function useVenue(slug = venueSlug()) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  console.log(`venue: ${useVenue()}`);
+  console.log(`venue: ${stageVenue()}`);
 }
