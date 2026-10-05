@@ -1,0 +1,6 @@
+===== https://cerveceria3gatoscom.taplink.site/
+(spa interactivo; la página carga OK en navegador real, pero el scraper estático no pudo extraer páginas. Se capturaron manualmente el logo y el PDF real del menú.)
+Archivos guardados en files/:
+- logo-cerveceria3gatos.png (300x300)
+- menu-taproom-3g-marzo-2026.pdf (1 página)
+El menú PDF está embebido desde Google Drive (id 1JzgJTam52u0iraUmwEpkFZoSdqVV4K-3).
