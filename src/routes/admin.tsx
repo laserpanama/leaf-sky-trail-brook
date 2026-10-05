@@ -534,9 +534,9 @@ function Admin() {
         ) : tab === "mesas" ? (
           <MesasDesk />
         ) : tab === "kcocina" ? (
-          <StationDesk station="cocina" canSwitch={role === "cocina" || role === "gerencia"} />
+          <StationDesk key="cocina" station="cocina" canSwitch={role === "cocina" || role === "gerencia"} />
         ) : tab === "kbarra" ? (
-          <StationDesk station="barra" canSwitch={role === "barra" || role === "gerencia"} />
+          <StationDesk key="barra" station="barra" canSwitch={role === "barra" || role === "gerencia"} />
         ) : tab === "caja" ? (
           <CajaDesk />
         ) : tab === "resenas" ? (
