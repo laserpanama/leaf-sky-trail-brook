@@ -58,11 +58,11 @@ export type Venue = {
     /** "classic" (default, La Quinta Pata) or "label" (craft-beer label look). */
     style?: "classic" | "label";
     /** Label layout: short facts with icons under the hero. */
-    highlights?: { icon: "paw" | "parking" | "clock" | "music"; es: string; en: string }[];
+    highlights?: { icon: "paw" | "parking" | "clock" | "music" | "pin"; es: string; en: string }[];
     /** Label layout: text on the round seal under the beer count. */
     seal?: Bi;
     /** Label layout: icon per entry of copy.nights. */
-    eventIcons?: ("paw" | "parking" | "clock" | "music")[];
+    eventIcons?: ("paw" | "parking" | "clock" | "music" | "pin")[];
   };
   /** Colors map 1:1 to the Tailwind tokens in styles.css. */
   theme: {

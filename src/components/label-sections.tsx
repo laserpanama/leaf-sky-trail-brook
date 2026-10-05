@@ -11,7 +11,7 @@ import { PLATE_SECTIONS, type Plate } from "@/lib/plates";
  * `layout.style: "label"`; the classic layout in site.tsx is untouched.
  */
 
-export type IconName = "paw" | "parking" | "clock" | "music";
+export type IconName = "paw" | "parking" | "clock" | "music" | "pin";
 
 export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   const common = {
@@ -42,6 +42,13 @@ export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
         <path d="M9 17V7h3.5a2.5 2.5 0 0 1 0 5H9" />
       </svg>
     );
+  if (name === "pin")
+    return (
+      <svg {...common}>
+        <path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z" />
+        <circle cx="12" cy="9.8" r="2.3" />
+      </svg>
+    );
   if (name === "music")
     return (
       <svg {...common}>
@@ -59,21 +66,20 @@ export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
 }
 
 /** Double gold rule with a diamond on each corner. Off: renders children as they are. */
-export function Frame({ on = true, children, inner = "" }: { on?: boolean; children: ReactNode; inner?: string }) {
+export function Frame({ on = true, children, inner = "", outer = "" }: { on?: boolean; children: ReactNode; inner?: string; outer?: string }) {
   if (!on) return <>{children}</>;
   const diamond = "absolute h-2.5 w-2.5 rotate-45 bg-brass";
   return (
-    <div className="relative border border-brass p-2.5">
+    <div className={`relative border border-brass p-2.5 ${outer}`}>
       <span aria-hidden="true" className={`${diamond} -top-1.5 -left-1.5`} />
       <span aria-hidden="true" className={`${diamond} -top-1.5 -right-1.5`} />
       <span aria-hidden="true" className={`${diamond} -bottom-1.5 -left-1.5`} />
       <span aria-hidden="true" className={`${diamond} -right-1.5 -bottom-1.5`} />
-      <div className={`border border-line ${inner}`}>{children}</div>
+      <div className={inner}>{children}</div>
     </div>
   );
 }
 
-const eyebrow = "font-label text-sm tracking-[0.32em] text-brass uppercase";
 const ctaSolid =
   "font-label inline-flex min-h-13 items-center justify-center bg-brass px-7 text-lg tracking-[0.12em] text-ink uppercase";
 const ctaLine =
@@ -91,8 +97,7 @@ export function LabelHero({ t, lang, beerCount }: { t: Copy; lang: Lang; beerCou
     <section id="inicio" className="scroll-mt-20">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-16 gap-y-14 px-5 pt-14 pb-24 md:pt-20">
         <div className="min-w-0 flex-[1_1_440px]">
-          <p className={eyebrow}>{t.kicker}</p>
-          <h1 className="mt-5 font-display text-6xl leading-[0.95] font-bold md:text-[84px]">{t.heroLine}</h1>
+          <h1 className="font-display text-6xl leading-[0.95] font-bold md:text-[84px]">{t.heroLine}</h1>
           <p className="mt-7 max-w-md text-lg text-fg/80">{t.heroSub}</p>
           <div className="mt-9 flex flex-wrap gap-3">
             <a href="#reservar" className={ctaSolid}>
@@ -185,8 +190,7 @@ export function LabelBeers({
     <section id="barra" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
       <div className="flex flex-wrap items-end justify-between gap-8">
         <div className="max-w-2xl">
-          <p className={eyebrow}>{t.barEyebrow}</p>
-          <h2 className="mt-4 font-display text-5xl leading-none font-bold md:text-6xl">{t.barTitle}</h2>
+          <h2 className="font-display text-5xl leading-none font-bold md:text-6xl">{t.barTitle}</h2>
           <p className="mt-5 text-fg/80">{t.barLead}</p>
         </div>
         <p className="font-label flex items-center gap-3 text-sm tracking-[0.12em] text-muted uppercase">
@@ -272,8 +276,7 @@ export function LabelFood({
     <section id="carta" className="scroll-mt-20 border-y border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap gap-x-16 gap-y-10 px-5 py-24">
         <div className="min-w-0 flex-[1_1_360px]">
-          <p className={eyebrow}>{t.cartaEyebrow}</p>
-          <h2 className="mt-4 font-display text-5xl leading-none font-bold md:text-[56px]">{t.cartaTitle}</h2>
+          <h2 className="font-display text-5xl leading-none font-bold md:text-[56px]">{t.cartaTitle}</h2>
           <p className="mt-5 max-w-md text-[15px] text-muted">{t.cartaNote}</p>
         </div>
         <ul className="min-w-0 flex-[1_1_420px]">
@@ -307,8 +310,7 @@ export function LabelEvents({ t }: { t: Copy }) {
   const icons = venue.layout.eventIcons ?? [];
   return (
     <section id="noches" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
-      <p className={eyebrow}>{t.nightsEyebrow}</p>
-      <h2 className="mt-4 max-w-3xl font-display text-5xl leading-none font-bold md:text-[56px]">{t.nightsTitle}</h2>
+      <h2 className="max-w-3xl font-display text-5xl leading-none font-bold md:text-[56px]">{t.nightsTitle}</h2>
       <ul className="mt-12 grid gap-6 md:grid-cols-3">
         {t.nights.map((n, i) => (
           <li key={n.title} className="flex flex-col gap-3.5 border border-line p-8">

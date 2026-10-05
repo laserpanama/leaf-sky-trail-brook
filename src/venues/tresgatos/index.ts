@@ -28,6 +28,7 @@ const venue: Venue = {
     drinksFirst: true,
     style: "label",
     highlights: [
+      { icon: "pin", es: "Taproom 3G · Ciudad de Panamá", en: "Taproom 3G · Panama City" },
       { icon: "paw", es: "Pet friendly", en: "Pet friendly" },
       { icon: "parking", es: "Parking", en: "Parking" },
       { icon: "clock", es: "Mar–Sáb desde las 3 p. m.", en: "Tue–Sat from 3 p.m." },

@@ -106,7 +106,7 @@ function SourceBadge({ s, lang }: { s: SourceSummary; lang: Lang }) {
   );
 }
 
-export function ReviewsSection({ lang }: { lang: Lang }) {
+export function ReviewsSection({ lang, plain = false }: { lang: Lang; plain?: boolean }) {
   const t = reviewsCopy[lang];
   const [data, setData] = useState<{ reviews: PublicReview[]; sources: SourceSummary[]; googleWriteUrl: string | null } | null>(null);
   const [filter, setFilter] = useState<ReviewSource | "todas">("todas");
@@ -157,9 +157,9 @@ export function ReviewsSection({ lang }: { lang: Lang }) {
   const done = state === "pendiente" || state === "publicada";
 
   return (
-    <section id="resenas" className="scroll-mt-20 border-t border-line bg-surface">
+    <section id="resenas" className={plain ? "scroll-mt-20 border-t border-line" : "scroll-mt-20 border-t border-line bg-surface"}>
       <div className="mx-auto max-w-6xl px-5 py-24">
-        <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.eyebrow}</p>
+        {plain ? null : <p className="text-xs tracking-[0.42em] text-brass uppercase">{t.eyebrow}</p>}
         <h2 className="mt-3 font-display text-5xl leading-tight">{t.title}</h2>
         <p className="mt-4 max-w-xl text-sm text-muted">{t.lead}</p>
 

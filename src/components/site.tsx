@@ -366,10 +366,10 @@ export function Site() {
         )}
 
         <section id="reservar" className={label ? "mx-auto max-w-6xl scroll-mt-20 px-5 pb-24" : "scroll-mt-20 border-y border-line bg-surface"}>
-          <Frame on={label} inner="bg-surface">
+          <Frame on={label} outer="bg-surface">
           <div className={label ? "grid gap-12 px-6 py-12 md:grid-cols-2 md:px-12" : "mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-2"}>
             <div>
-              <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.reserveEyebrow}</p>
+              {label ? null : <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.reserveEyebrow}</p>}
               <h2 className="mt-3 font-display text-5xl leading-tight display-i">{t.reserveTitle}</h2>
               <p className="mt-5 text-muted">{t.reserveLead}</p>
               <a
@@ -471,7 +471,7 @@ export function Site() {
                       type="number"
                       value={form.party}
                       onChange={(e) => setForm({ ...form, party: e.target.value })}
-                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                      className="min-h-11 w-full min-w-0 border border-line bg-bg px-3 text-fg"
                     />
                   </label>
                 </div>
@@ -485,7 +485,7 @@ export function Site() {
                       autoComplete="name"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                      className="min-h-11 w-full min-w-0 border border-line bg-bg px-3 text-fg"
                     />
                   </label>
                   <label className="grid gap-2 text-sm text-muted">
@@ -499,7 +499,7 @@ export function Site() {
                       placeholder={t.phonePh}
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="min-h-11 border border-line bg-bg px-3 text-fg"
+                      className="min-h-11 w-full min-w-0 border border-line bg-bg px-3 text-fg"
                     />
                   </label>
                 </div>
@@ -544,12 +544,12 @@ export function Site() {
           ))}
         </section>
 
-        <ReviewsSection lang={lang} />
+        <ReviewsSection lang={lang} plain={label} />
 
         <section id="visita" className="scroll-mt-20 border-t border-line">
           <div className="mx-auto grid max-w-6xl gap-8 px-5 py-20 md:grid-cols-2">
             <div>
-              <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.visitEyebrow}</p>
+              {label ? null : <p className="text-xs tracking-[0.28em] text-brass uppercase">{t.visitEyebrow}</p>}
               <h2 className="mt-3 font-display text-5xl leading-tight">{t.visitTitle}</h2>
               <p className="mt-5 text-fg">{t.address}</p>
               <p className="mt-2 text-sm text-muted">{t.mapNote}</p>
@@ -574,7 +574,7 @@ export function Site() {
       </main>
 
       <footer className="border-t border-line px-5 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted">
+        <div className={label ? "mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted [&>p]:max-w-prose" : "mx-auto flex max-w-6xl flex-col gap-3 text-sm text-muted"}>
           <p className="text-fg">{venue.contact.footer}</p>
           <p>{t.legal}</p>
           <p>{t.legal2}</p>
@@ -735,7 +735,7 @@ function ReserveCalendar({
       : "Pick a day";
 
   return (
-    <div className="lqp-cal border border-line bg-bg p-3">
+    <div className={venue.layout.style === "label" ? "lqp-cal" : "lqp-cal border border-line bg-bg p-3"}>
       <p className="px-2 pb-2 font-display text-2xl text-fg">{label}</p>
       <DayPicker
         mode="single"
