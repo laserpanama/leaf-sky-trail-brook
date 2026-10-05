@@ -14,6 +14,8 @@ export type Drink = {
   status: DrinkStatus;
   img: string | null;
   available: boolean;
+  /** Optional tasting note under the name (style, ABV, IBU…). */
+  note?: { es: string; en: string };
 };
 
 export const DRINK_TARGET: Record<DrinkSection, number> = {

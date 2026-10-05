@@ -45,8 +45,11 @@ export type Venue = {
     siteUrl: string;
     favicon: { href: string; type: string };
   };
-  /** Small round logo shown beside the name in the header. Optional. */
-  logo?: string;
+  /**
+   * Header logo. Optional. `round` for an avatar-style mark beside the name;
+   * `replacesName` for a wordmark that already spells the name.
+   */
+  logo?: { src: string; width: number; height: number; round?: boolean; replacesName?: boolean };
   /** Shown faded on dishes without a photo. Optional; default is the LQP glyph. */
   placeholder?: string;
   layout: {

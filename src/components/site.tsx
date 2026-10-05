@@ -143,6 +143,24 @@ export function Site() {
                   <h3 className="font-display text-3xl display-i">{sectionLabel[section][lang]}</h3>
                   <ul className="mt-6 columns-1 gap-x-16 md:columns-2">
                     {items.map((drink) => (
+                      drink.note ? (
+                        <li key={drink.id} className="py-3 break-inside-avoid">
+                          <div className="flex items-center gap-3">
+                            <span className="font-display text-2xl">{lang === "es" ? drink.es : drink.en}</span>
+                            <span className="leader mb-1 min-w-6 flex-1" />
+                            <span className="text-brass">{money(drink.price)}</span>
+                            <button
+                              type="button"
+                              aria-label={`${t.cartAdd} ${lang === "es" ? drink.es : drink.en}`}
+                              onClick={() => addToCart("drink", drink.id)}
+                              className="min-h-11 min-w-11 border border-line text-brass"
+                            >
+                              {qtyOf("drink", drink.id) || "+"}
+                            </button>
+                          </div>
+                          <p className="-mt-1 pr-14 text-sm leading-snug text-muted">{drink.note[lang]}</p>
+                        </li>
+                      ) : (
                       <li key={drink.id} className="flex items-center gap-3 py-2 break-inside-avoid">
                         {drink.img && (
                           <img
@@ -167,6 +185,7 @@ export function Site() {
                           {qtyOf("drink", drink.id) || "+"}
                         </button>
                       </li>
+                      )
                     ))}
                   </ul>
                 </div>
@@ -203,8 +222,16 @@ export function Site() {
       <header className="sticky top-0 z-40 border-b border-line/80 bg-bg/80 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-6xl items-center gap-8 px-5">
           <a href="#inicio" className={`${venue.logo ? "flex items-center gap-3 " : ""}font-display text-base tracking-[0.14em] text-fg uppercase sm:text-xl sm:tracking-[0.22em]`}>
-            {venue.logo ? <img src={venue.logo} alt="" width={40} height={40} className="h-10 w-10 rounded-full" /> : null}
-            {venue.name}
+            {venue.logo ? (
+              <img
+                src={venue.logo.src}
+                alt={venue.logo.replacesName ? venue.name : ""}
+                width={venue.logo.width}
+                height={venue.logo.height}
+                className={venue.logo.round ? "h-10 w-10 rounded-full" : "h-12 w-auto"}
+              />
+            ) : null}
+            {venue.logo?.replacesName ? null : venue.name}
           </a>
           <nav className="hidden flex-1 items-center gap-6 md:flex">
             {t.nav.map((item) => (

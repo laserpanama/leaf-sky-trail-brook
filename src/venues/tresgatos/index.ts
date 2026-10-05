@@ -3,9 +3,12 @@ import { emptyBook, type Venue } from "../types";
 /**
  * Cervecería Tres Gatos | Taproom — pitch demo (not a client yet).
  *
- * Source: Instagram @3gatoscerveceria and public listings (Oct 2026).
- * Confirm with the house before go-live: beer list, prices, food menu, hours,
- * payment methods. WhatsApp points to Pipo's TEST number until handover.
+ * Sources (Oct 2026): the house's own beer menu "Menu Taproom 3G marzo 2026"
+ * (linked from their Taplink), their logo, Instagram @3gatoscerveceria and public
+ * listings. Beer names, styles, ABV and IBU are theirs; PRICES ARE PLACEHOLDERS
+ * (the menu has none). Confirm prices, food, hours and payments before go-live.
+ * WhatsApp points to Pipo's TEST number until handover.
+ * Not related: cervezatresgatos.com.co is a different brewery in Bogotá.
  */
 const DEMO_WA = "50764946886";
 
@@ -19,17 +22,17 @@ const venue: Venue = {
     siteUrl: "https://demo-tresgatos.pipolopez.pro",
     favicon: { href: "/favicon.png", type: "image/png" },
   },
-  logo: "/logo-round.png",
+  logo: { src: "/wordmark.png", width: 412, height: 180, replacesName: true },
   placeholder: "/logo-round.png",
   layout: { drinksFirst: true },
   theme: {
-    bg: "#0d0d0e",
-    surface: "#18181a",
-    fg: "#f1eee6",
-    muted: "#9a968c",
-    accent: "#f0a630",
-    ink: "#141210",
-    line: "#2a2a2b",
+    bg: "#101f2f",
+    surface: "#15283c",
+    fg: "#f2ecdc",
+    muted: "#9eabbb",
+    accent: "#c4b480",
+    ink: "#101f2f",
+    line: "#24384f",
     displayStyle: "normal",
     displayCss:
       ".font-display{letter-spacing:.015em}#nosotros p.font-display{font-family:var(--font-sans);font-weight:300;font-size:1.65rem;line-height:1.45;letter-spacing:0}",
@@ -57,7 +60,7 @@ const venue: Venue = {
   jsonld: { type: "BarOrPub", cuisine: "Cerveza artesanal", payment: "Cash, Credit Card", telephone: "+5073952998" },
   media: {
     hero: { src: "/media/hero.svg", alt: "Torre de grifos con las cervezas de la casa" },
-    bar: { src: "/media/flight.svg", alt: "Un flight de cuatro cervezas de la casa" },
+    bar: { src: "/media/flight.svg", alt: "Cuatro cervezas de la casa, de la rubia a la oscura" },
     nights: { src: "/media/stage.svg", alt: "La tarima con guitarra y amplificador" },
     stage: { src: "/media/pets.svg", alt: "Un perro descansando en el taproom" },
   },
@@ -70,9 +73,9 @@ const venue: Venue = {
   copy: {
     es: {
       name: "Tres Gatos",
-      kicker: "Taproom · Cervecería artesanal · Ciudad de Panamá",
+      kicker: "Taproom 3G · Cervecería artesanal · Ciudad de Panamá",
       heroLine: "Todo empieza con 3 gatos.",
-      heroSub: "Cervezas de la casa en barril, comida y parking del bueno. Tu perro también entra.",
+      heroSub: "Más de 20 cervezas de la casa en barril, comida y parking del bueno. Tu perro también entra.",
       reserve: "Reservar",
       menu: "Ver las cervezas",
       nav: [
@@ -95,10 +98,10 @@ const venue: Venue = {
       barEyebrow: "En barril",
       barTitle: "Del tanque al vaso.",
       barLead:
-        "Las de la casa, servidas en barril. Lo que no está tirando hoy no aparece. Si no sabes por cuál empezar, pide un flight.",
+        "Siete familias de la casa: rubias, maltosas, lupuladas, oscuras, ácidas, especiales y de temporada. Lo que no está tirando hoy no aparece. Si dudas, pide probar antes. Demo: precios de muestra.",
       barItems: [
         { title: "De la casa", body: "Hechas aquí, en barril." },
-        { title: "Flight", body: "Cuatro muestras para elegir tu pinta." },
+        { title: "Siete familias", body: "De la pilsner a la imperial stout." },
         { title: "Ediciones especiales", body: "Colaboraciones por temporada." },
       ],
       nightsEyebrow: "Eventos",
@@ -169,7 +172,7 @@ const venue: Venue = {
       holdBody: "El mensaje lleva fecha, hora, personas y la nota. La casa confirma por ahí. El nombre no se guarda en la página.",
       aboutEyebrow: "Nosotros",
       about: [
-        "Todo empieza con 3 gatos. Tres Gatos es un taproom en Ciudad de Panamá: cervezas artesanales de la casa, servidas en barril.",
+        "Todo empieza con 3 gatos. Tres Gatos es una cervecería con taproom en Ciudad de Panamá, el Taproom 3G: cervezas de la casa, de la pilsner a la imperial stout, servidas en barril.",
         "Comida para acompañar, parking de verdad y perros bienvenidos. Y si haces cerveza en casa, aquí también consigues los ingredientes.",
       ],
       visitEyebrow: "Visítanos",
@@ -184,9 +187,9 @@ const venue: Venue = {
     },
     en: {
       name: "Tres Gatos",
-      kicker: "Taproom · Craft brewery · Panama City",
+      kicker: "Taproom 3G · Craft brewery · Panama City",
       heroLine: "It all starts with 3 cats.",
-      heroSub: "House beers on draft, food, and real parking. Your dog comes in too.",
+      heroSub: "20+ house beers on draft, food, and real parking. Your dog comes in too.",
       reserve: "Reserve",
       menu: "See the beers",
       nav: [
@@ -209,10 +212,10 @@ const venue: Venue = {
       barEyebrow: "On draft",
       barTitle: "From the tank to the glass.",
       barLead:
-        "House beers on draft. Anything not pouring today is hidden. Not sure where to start? Order a flight.",
+        "Seven house families: blondes, malty, hoppy, dark, sour, specials, and seasonal. Anything not pouring today is hidden. Not sure? Ask for a taste first. Demo: sample prices.",
       barItems: [
         { title: "House beers", body: "Brewed here, on draft." },
-        { title: "Flight", body: "Four tasters to pick your pint." },
+        { title: "Seven families", body: "From pilsner to imperial stout." },
         { title: "Special editions", body: "Seasonal collaborations." },
       ],
       nightsEyebrow: "Events",
@@ -283,7 +286,7 @@ const venue: Venue = {
       holdBody: "The message has the date, time, party, and note. The house confirms there. A name is not stored on the page.",
       aboutEyebrow: "About",
       about: [
-        "It all starts with 3 cats. Tres Gatos is a taproom in Panama City: craft beer brewed in house and poured on draft.",
+        "It all starts with 3 cats. Tres Gatos is a brewery with a taproom in Panama City, Taproom 3G: house beers from pilsner to imperial stout, poured on draft.",
         "Food to go with it, real parking, and dogs welcome. If you brew at home, you can pick up ingredients here too.",
       ],
       visitEyebrow: "Visit",
@@ -298,22 +301,41 @@ const venue: Venue = {
     },
   },
   menu: {
-    drinkSections: ["casa", "clasico", "cero"],
+    // The house menu's seven families, mapped onto the template's drink slots.
+    drinkSections: ["casa", "clasico", "cerveza", "vino", "destilados", "cero", "cafe"],
     drinkLabels: {
-      casa: { es: "De la casa, en barril", en: "House beers, on draft" },
-      clasico: { es: "Edición especial", en: "Special edition" },
-      cero: { es: "Sin alcohol", en: "Zero-proof" },
+      casa: { es: "Blondies · rubias y refrescantes", en: "Blondies · light and crisp" },
+      clasico: { es: "Malt Lover · para los amantes de la malta", en: "Malt Lover · for malt fans" },
+      cerveza: { es: "Hop Heads · lupulosas e intensas", en: "Hop Heads · hoppy and bold" },
+      vino: { es: "Hello Darkness · oscuras y tostadas", en: "Hello Darkness · dark and roasty" },
+      destilados: { es: "The Sour Batch · ácidas y fermentaciones mixtas", en: "The Sour Batch · sours and mixed ferments" },
+      cero: { es: "Specials · fermentaciones especiales", en: "Specials · special ferments" },
+      cafe: { es: "Mad Season · de temporada y exóticas", en: "Mad Season · seasonal and exotic" },
     },
-    // Names from the house's Instagram and guest reviews. Prices are DEMO placeholders.
+    // Names, styles, ABV and IBU from the house menu (marzo 2026). Prices are DEMO placeholders.
     drinks: [
-      { id: "oktopussy", es: "Oktopussy", en: "Oktopussy", section: "casa", price: 7, cost: 0, status: "OK", img: null },
-      { id: "rocombey", es: "Rocombey", en: "Rocombey", section: "casa", price: 7, cost: 0, status: "OK", img: null },
-      { id: "jungo-ipa", es: "Jungo IPA", en: "Jungo IPA", section: "casa", price: 7, cost: 0, status: "OK", img: null },
-      { id: "ipa-frutas", es: "IPA de frutas", en: "Fruit IPA", section: "casa", price: 7.5, cost: 0, status: "OK", img: null },
-      { id: "flight", es: "Flight · 4 muestras", en: "Flight · 4 tasters", section: "casa", price: 9, cost: 0, status: "OK", img: null },
-      { id: "rocombey-jd", es: "Rocombey × Jack Daniel's", en: "Rocombey × Jack Daniel's", section: "clasico", price: 9, cost: 0, status: "OK", img: null },
-      { id: "sodas", es: "Sodas", en: "Sodas", section: "cero", price: 2.5, cost: 0, status: "OK", img: null },
-      { id: "agua", es: "Agua", en: "Water", section: "cero", price: 1.5, cost: 0, status: "OK", img: null },
+      { id: "der-stubentiger", es: "Der Stubentiger", en: "Der Stubentiger", section: "casa", price: 6, cost: 0, status: "OK", img: null, note: { es: "Bohemian Pilsner. Refrescante y fácil de beber, con notas de pan y un toque amargo · 4.8% · 36 IBU", en: "Bohemian Pilsner. Crisp and easy, bready with a light bitter finish · 4.8% ABV · 36 IBU" } },
+      { id: "tio-caiman", es: "Tío Caimán", en: "Tío Caimán", section: "casa", price: 6, cost: 0, status: "OK", img: null, note: { es: "Lager de malta pilsner, limpia, con notas acarameladas y un final floral especiado · 4.3% · 11 IBU", en: "Pilsner-malt lager. Clean, lightly caramel, floral-spicy finish · 4.3% ABV · 11 IBU" } },
+      { id: "lady-buzz", es: "Lady Buzz", en: "Lady Buzz", section: "casa", price: 6.5, cost: 0, status: "OK", img: null, note: { es: "Pale Ale con naranja sanguina y miel de abeja, lúpulos nobles alemanes · 6.0% · 40 IBU", en: "Pale ale with blood orange and honey, German noble hops · 6.0% ABV · 40 IBU" } },
+      { id: "al-brown", es: "Al Brown", en: "Al Brown", section: "clasico", price: 6.5, cost: 0, status: "OK", img: null, note: { es: "American Brown Ale. Toffee, nuez y tostado suave, final limpio y seco · 3.8% · 18 IBU", en: "American Brown Ale. Toffee, nut, soft roast, clean dry finish · 3.8% ABV · 18 IBU" } },
+      { id: "hells-cat", es: "Hell's Cat", en: "Hell's Cat", section: "clasico", price: 7, cost: 0, status: "OK", img: null, note: { es: "Helles Bock. Maltosa, acaramelada y sedosa, con calidez alcohólica · 6.5% · 27 IBU", en: "Helles Bock. Malty, caramel, silky and warming · 6.5% ABV · 27 IBU" } },
+      { id: "oktopussy", es: "Oktopussy", en: "Oktopussy", section: "clasico", price: 6.5, cost: 0, status: "OK", img: null, note: { es: "Lager de festival alemana, acaramelada y tostada, con lúpulos nobles florales · 5.0% · 24 IBU", en: "German festival lager. Caramel and toast with floral noble hops · 5.0% ABV · 24 IBU" } },
+      { id: "ipl", es: "IPL", en: "IPL", section: "cerveza", price: 7, cost: 0, status: "OK", img: null, note: { es: "India Pale Lager. Ligera y refrescante, con lúpulo cítrico y frutal · 5.0% · 64 IBU", en: "India Pale Lager. Light and crisp with citrus, fruity hops · 5.0% ABV · 64 IBU" } },
+      { id: "nekomata", es: "Nekomata", en: "Nekomata", section: "cerveza", price: 7, cost: 0, status: "OK", img: null, note: { es: "Red IPA cobriza, base de malta acaramelada y amargor cítrico tropical · 6.0% · 76 IBU", en: "Copper Red IPA. Caramel malt and tropical citrus bitterness · 6.0% ABV · 76 IBU" } },
+      { id: "ayala-yakima", es: "Ayala Yakima", en: "Ayala Yakima", section: "cerveza", price: 7, cost: 0, status: "OK", img: null, note: { es: "Hazy IPA de cuerpo completo, jugosa, con lúpulos tropicales · 5.0% · 43 IBU", en: "Full-bodied, juicy Hazy IPA with tropical hops · 5.0% ABV · 43 IBU" } },
+      { id: "anonima", es: "Anónima", en: "Anónima", section: "cerveza", price: 5, cost: 0, status: "OK", img: null, note: { es: "IPA sin alcohol, con aroma, amargor y frescura de lúpulo · 0.3% · 20 IBU", en: "Non-alcoholic IPA with real hop aroma and bite · 0.3% ABV · 20 IBU" } },
+      { id: "hairy-porter", es: "Hairy Porter", en: "Hairy Porter", section: "vino", price: 7, cost: 0, status: "OK", img: null, note: { es: "Porter ligera con café, maltas tostadas y chocolate negro, con cold brew · 5.5% · 43 IBU", en: "Light porter with coffee, roasted malt, dark chocolate and cold brew · 5.5% ABV · 43 IBU" } },
+      { id: "rocombey", es: "Rocombey", en: "Rocombey", section: "vino", price: 8, cost: 0, status: "OK", img: null, note: { es: "Imperial Stout. Chocolate negro, tostado y cremosa, sorprendentemente suave · 8.0% · 48 IBU", en: "Imperial Stout. Dark chocolate, roast, creamy and surprisingly smooth · 8.0% ABV · 48 IBU" } },
+      { id: "lord-berginton", es: "Lord Berginton", en: "Lord Berginton", section: "destilados", price: 7, cost: 0, status: "OK", img: null, note: { es: "Berliner Weisse con mandarina fresca, ácida y refrescante · 3.5% · 5 IBU", en: "Berliner Weisse with fresh mandarin, tart and refreshing · 3.5% ABV · 5 IBU" } },
+      { id: "madame-berri", es: "Madame Berri", en: "Madame Berri", section: "destilados", price: 7, cost: 0, status: "OK", img: null, note: { es: "Berliner Weisse con fresas frescas, acidez suave · 3.5% · 5 IBU", en: "Berliner Weisse with fresh strawberries, gently tart · 3.5% ABV · 5 IBU" } },
+      { id: "katzpie", es: "Katzpie", en: "Katzpie", section: "destilados", price: 7, cost: 0, status: "OK", img: null, note: { es: "Sour IPA, tropical, entre acidez y amargor con lúpulos frutales · 5.0% · 51 IBU", en: "Sour IPA. Tropical, tart and bitter with fruity hops · 5.0% ABV · 51 IBU" } },
+      { id: "pink-gun", es: "Pink Gun", en: "Pink Gun", section: "cero", price: 6.5, cost: 0, status: "OK", img: null, note: { es: "Ginger beer rosada por el saril, ligeramente picante y muy burbujeante · 5.0%", en: "Ginger beer, pink from sorrel, lightly spicy and very fizzy · 5.0% ABV" } },
+      { id: "wild-cider", es: "Wild Cider", en: "Wild Cider", section: "cero", price: 6.5, cost: 0, status: "OK", img: null, note: { es: "Sidra de manzana con frutos rojos, semi dulce y ligera · 5.0% · 5 IBU", en: "Apple cider with red berries, semi-sweet and light · 5.0% ABV · 5 IBU" } },
+      { id: "jefe-schoffer", es: "Jefe Schoffer", en: "Jefe Schoffer", section: "cafe", price: 7, cost: 0, status: "OK", img: null, note: { es: "Hefeweizen con soda de toronja natural, para días calurosos · 3.5% · 20 IBU", en: "Hefeweizen with natural grapefruit soda, for hot days · 3.5% ABV · 20 IBU" } },
+      { id: "lagrimas-de-diablo", es: "Lágrimas de Diablo", en: "Lágrimas de Diablo", section: "cafe", price: 7, cost: 0, status: "OK", img: null, note: { es: "Smoked Gose ahumada en leña local, con sal y ají chombo · 4.0% · 8 IBU", en: "Smoked Gose over local wood, with salt and ají chombo · 4.0% ABV · 8 IBU" } },
+      { id: "mangoliciuos", es: "Mangoliciuos", en: "Mangoliciuos", section: "cafe", price: 7, cost: 0, status: "OK", img: null, note: { es: "Tropical IPA con mango, amargor con dulzor y frescura · 5.5% · 55 IBU", en: "Tropical IPA with mango, bitter, sweet and fresh · 5.5% ABV · 55 IBU" } },
+      { id: "panita", es: "Panita", en: "Panita", section: "cafe", price: 7, cost: 0, status: "OK", img: null, note: { es: "Pale Ale con pitaya, rosada, fresca y semi dulce · 5.0% · 35 IBU", en: "Pale ale with pitaya, pink, fresh and semi-sweet · 5.0% ABV · 35 IBU" } },
+      { id: "rocombey-jd", es: "Rocombey × Jack Daniel's", en: "Rocombey × Jack Daniel's", section: "cafe", price: 9, cost: 0, status: "OK", img: null, note: { es: "Edición especial en barril: la imperial stout de la casa con Jack Daniel's", en: "Special edition on draft: the house imperial stout with Jack Daniel's" } },
     ],
     plateSections: ["mains", "sides"],
     plateLabels: {
@@ -339,7 +361,9 @@ const venue: Venue = {
     payments: "Tarjeta y efectivo (por confirmar)",
     amenities: "Parking, pet friendly",
     facts: [
-      "Cervezas artesanales de la casa en barril, entre ellas Oktopussy, Rocombey y Jungo IPA.",
+      "Cervezas de la casa en barril en siete familias: Blondies, Malt Lover, Hop Heads, Hello Darkness, The Sour Batch, Specials y Mad Season.",
+      "Algunas: Der Stubentiger (pilsner), Oktopussy (lager de festival), Nekomata (Red IPA), Rocombey (imperial stout), Katzpie (sour IPA) y Anónima (IPA sin alcohol).",
+      "El taproom se llama Taproom 3G.",
       "Pet friendly: se puede venir con perro.",
       "Tiene parking.",
       "Música en vivo algunas noches; se anuncia en Instagram @3gatoscerveceria.",
