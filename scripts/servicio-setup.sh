@@ -30,11 +30,12 @@ setvar() { # setvar NAME VALUE  → replace or add in $EXTRA
 getvar() { grep -E "^(export )?$1=" "$EXTRA" 2>/dev/null | tail -1 | sed -E "s/^(export )?$1=//; s/^'(.*)'$/\1/; s/^\"(.*)\"$/\1/" || true; }
 
 # 2. Patch lqp-deploy once (backup kept next to it).
-if ! grep -q "$APP.extra.env" "$DEPLOY"; then
+# The patched line reads literally `$APP.extra.env`, so match on "extra.env", not the expanded name.
+if ! grep -qF 'extra.env' "$DEPLOY"; then
   cp "$DEPLOY" "$DEPLOY.bak.$(date +%Y%m%d%H%M%S)"
   # Right after the heredoc that regenerates $ENVF ("umask 022"), append the extras.
   sed -i "0,/^umask 022\$/s//umask 022\n[ -f \/etc\/\$APP.extra.env ] \&\& cat \/etc\/\$APP.extra.env >> \"\$ENVF\"/" "$DEPLOY"
-  grep -q "$APP.extra.env" "$DEPLOY" || { echo "No pude parchear $DEPLOY"; exit 1; }
+  grep -qF 'extra.env' "$DEPLOY" || { echo "No pude parchear $DEPLOY"; exit 1; }
   echo "✔ lqp-deploy ahora conserva $EXTRA en cada deploy"
 fi
 
